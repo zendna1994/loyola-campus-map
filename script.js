@@ -26,15 +26,17 @@ var hallIcon = L.icon({
   iconSize: [30, 30]
 });
 
-// 4. MARKERS (ADD HERE — PART 3)
-L.marker([13.06,80.23], { icon: deptIcon })
+// Zoology Department
+L.marker([13.0639, 80.2335], { icon: deptIcon })
   .addTo(map)
   .bindPopup("<b>Zoology Department</b><br>Advanced Zoology & Biotechnology");
 
-L.marker([13.06,80.233], { icon: labIcon })
+// Bio-Nexus Lab
+L.marker([13.0645, 80.2342], { icon: labIcon })
   .addTo(map)
   .bindPopup("<b>Bio-Nexus Hitech Lab</b>");
 
-L.marker([13.06,80.23], { icon: hallIcon })
+// Bertram Hall
+L.marker([13.0652, 80.2328], { icon: hallIcon })
   .addTo(map)
   .bindPopup("<b>Bertram Hall</b>");
