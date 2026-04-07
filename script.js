@@ -1,24 +1,20 @@
-// Create map (simple coordinate system)
-var map = L.map('map', {
-  crs: L.CRS.Simple,
-  minZoom: -2
-});
+// Loyola College center
+var map = L.map('map').setView([13.0643, 80.2337], 17);
 
-// Image size (adjust if needed)
-var width = 1080;
-var height = 1516;
+// Satellite tiles (clean)
+L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  {
+    attribution: 'Tiles © Esri',
+    maxZoom: 19
+  }
+).addTo(map);
 
-// Define bounds
-var bounds = [[0, 0], [height, width]];
-
-// Add image
-var image = L.imageOverlay('campus.png', bounds).addTo(map);
-
-// Fit to image
-map.fitBounds(bounds);
+// Optional: remove zoom control (clean UI)
+map.zoomControl.setPosition('bottomright');
 
 // Test marker
-L.marker([800, 600])
+L.marker([13.0643, 80.2337])
   .addTo(map)
-  .bindPopup("Test Location")
+  .bindPopup("Loyola College Campus")
   .openPopup();
