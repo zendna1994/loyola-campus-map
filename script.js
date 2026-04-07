@@ -27,16 +27,16 @@ var hallIcon = L.icon({
 });
 
 // Zoology Department
-L.marker([13.0639, 80.2335], { icon: deptIcon })
+L.marker([13.063677,80.233606], { icon: deptIcon })
   .addTo(map)
   .bindPopup("<b>Zoology Department</b><br>Advanced Zoology & Biotechnology");
 
 // Bio-Nexus Lab
-L.marker([13.0645, 80.2342], { icon: labIcon })
+L.marker([13.063547,80.233069], { icon: labIcon })
   .addTo(map)
   .bindPopup("<b>Bio-Nexus Hitech Lab</b>");
 
 // Bertram Hall
-L.marker([13.0652, 80.2328], { icon: hallIcon })
+L.marker([13.062448,80.233185], { icon: hallIcon })
   .addTo(map)
   .bindPopup("<b>Bertram Hall</b>");
