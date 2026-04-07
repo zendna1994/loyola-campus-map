@@ -12,29 +12,29 @@ L.tileLayer(
 
 // 3. ICONS (ADD HERE)
 var deptIcon = L.icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/512/190/190411.png',
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/1570/1570896.png',
   iconSize: [30, 30]
 });
 
 var labIcon = L.icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/512/1046/1046857.png',
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/3483/3483663.png',
   iconSize: [30, 30]
 });
 
 var hallIcon = L.icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/512/3177/3177361.png',
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/16841/16841560.png',
   iconSize: [30, 30]
 });
 
 // 4. MARKERS (ADD HERE — PART 3)
-L.marker([13.063712,80.233659], { icon: deptIcon })
+L.marker([13.06,80.23], { icon: deptIcon })
   .addTo(map)
   .bindPopup("<b>Zoology Department</b><br>Advanced Zoology & Biotechnology");
 
-L.marker([13.063584,80.233114], { icon: labIcon })
+L.marker([13.06,80.233], { icon: labIcon })
   .addTo(map)
   .bindPopup("<b>Bio-Nexus Hitech Lab</b>");
 
-L.marker([13.062464,80.233241], { icon: hallIcon })
+L.marker([13.06,80.23], { icon: hallIcon })
   .addTo(map)
   .bindPopup("<b>Bertram Hall</b>");
