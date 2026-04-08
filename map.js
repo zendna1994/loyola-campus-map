@@ -1,25 +1,29 @@
 // =========================================
-// ZEN-DNA: LOYOLA CAMPUS MAP ENGINE (V3)
+// ZEN-DNA: LOYOLA CAMPUS MAP ENGINE (FINAL)
 // =========================================
 
+// 1. INITIALIZE MAP (Zoom controls moved to Top-Left)
 var map = L.map('map', {
   attributionControl: false,
+  zoomControl: false, // Disabling default to move it
   minZoom: 0,
   maxZoom: 25 
 }).setView([13.0636, 80.2336], 17);
 
+// Add Zoom Control to Top Left
+L.control.zoom({ position: 'topleft' }).addTo(map);
+
+// 2. SATELLITE TILE (With Native Zoom Stretching)
 L.tileLayer(
   'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   { maxZoom: 25, maxNativeZoom: 19 }
 ).addTo(map);
 
-map.zoomControl.setPosition('bottomright');
-
-// 1. ICON CONFIGURATION (Enlarged to 50x50 as discussed)
+// 3. ICON CONFIGURATION (Unified size)
 var iconSizeConfig = {
-  iconSize: [50, 50],
-  iconAnchor: [25, 50],
-  popupAnchor: [0, -50]
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -40]
 };
 
 var icons = {
@@ -41,53 +45,45 @@ var all = [];
 var markers = [];
 var userMarker;
 
-// 2. DATA LOADING WITH MULTI-FORMAT LOGIC
+// 4. DATA LOADING (Updated: All Sheets follow the same Index)
 Promise.all([
   fetch(SHEET1).then(r => r.text()),
   fetch(SHEET2).then(r => r.text()),
   fetch(SHEET3).then(r => r.text()),
   fetch(SHEET4).then(r => r.text())
 ]).then(data => {
-  data.forEach((csv, index) => {
+  data.forEach((csv) => {
     let rows = csv.split("\n").slice(1);
     rows.forEach(row => {
       let c = row.split(",").map(val => val.trim());
-      if (c.length < 5) return;
+      if (c.length < 8) return; // Skip invalid rows
 
-      let obj = {};
+      // NEW UNIFIED FORMAT (Category[0], Type[1], Name[2], Bldg[3], Floor[4], Room[5], Lat[6], Lng[7], Desc[8])
+      let obj = {
+        category: c[0].toLowerCase(),
+        type: c[1],
+        name: c[2],
+        building: c[3],
+        floor: c[4],
+        room: c[5],
+        lat: parseFloat(c[6]),
+        lng: parseFloat(c[7]),
+        desc: c[8]
+      };
 
-      // Mapping Logic based on Sheet Index
-      if (index === 0) { // Sheet 1: Dept Format
-        obj = {
-          category: c[0], name: c[4], building: c[3], 
-          floor: c[5], room: c[6], lat: parseFloat(c[7]), 
-          lng: parseFloat(c[8]), desc: c[9]
-        };
-      } else { // Sheets 2, 3, 4: Standard Format
-        obj = {
-          category: c[0], name: c[2], building: c[3], 
-          floor: c[4], room: c[5], lat: parseFloat(c[6]), 
-          lng: parseFloat(c[7]), desc: c[8]
-        };
-      }
-
-      if (!obj.lat || !obj.lng) return;
+      if (!obj.lat || !obj.lng || isNaN(obj.lat)) return;
 
       all.push(obj);
 
-      // Create Marker
       let icon = L.icon({
-        iconUrl: icons[obj.category.toLowerCase()] || 'assets/icons/building.png',
+        iconUrl: icons[obj.category] || 'assets/icons/building.png',
         ...iconSizeConfig
       });
 
-      // CLEAN POPUP LOGIC (No 'undefined' text)
       let popupContent = `
-        <div style="font-family: 'Poppins', sans-serif;">
-          <div style="color:#23365D; font-weight:700; border-bottom:2px solid #6C232E; margin-bottom:5px;">
-            ${obj.name || ""}
-          </div>
-          <div style="font-size:11px; color:#666; line-height:1.4;">
+        <div class="popup-container">
+          <div class="popup-title">${obj.name || "Unnamed"}</div>
+          <div class="popup-sub">
             ${obj.building ? "<b>Bldg:</b> " + obj.building + "<br>" : ""}
             ${obj.floor ? "<b>Floor:</b> " + obj.floor + " " : ""}
             ${obj.room ? "| <b>Room:</b> " + obj.room : ""}<br>
@@ -103,7 +99,28 @@ Promise.all([
   populateBuildings();
 });
 
-// 3. FILTER & SEARCH FUNCTIONS
+// 5. MENU TOGGLE (Fixed "Options" function)
+function toggleMenu() {
+  let m = document.getElementById("menu");
+  // Toggle between flex and none
+  if (m.style.display === "flex") {
+    m.style.display = "none";
+  } else {
+    m.style.display = "flex";
+  }
+}
+
+// 6. SEARCH & FILTERS
+document.getElementById("search").addEventListener("input", function() {
+  let q = this.value.toLowerCase();
+  markers.forEach(m => {
+    if (m.data.name.toLowerCase().includes(q) && q.length > 2) {
+      map.setView([m.data.lat, m.data.lng], 19);
+      m.marker.openPopup();
+    }
+  });
+});
+
 function populateBuildings() {
   let set = new Set(all.map(p => p.building).filter(b => b));
   let sel = document.getElementById("buildingFilter");
@@ -123,15 +140,15 @@ function applyFilters() {
 
   markers.forEach(m => {
     let show = true;
-    if (b != "all" && m.data.building != b) show = false;
-    if (f != "all" && m.data.floor != f) show = false;
+    if (b !== "all" && m.data.building !== b) show = false;
+    if (f !== "all" && m.data.floor !== f) show = false;
 
     if (show) map.addLayer(m.marker);
     else map.removeLayer(m.marker);
   });
 }
 
-// 4. USER UTILITIES
+// 7. USER LOCATION & NEAREST
 function locateUser() {
   map.locate({setView: true, maxZoom: 18});
   map.on('locationfound', e => {
@@ -145,12 +162,12 @@ function locateUser() {
 }
 
 function nearest(type) {
-  if (!userMarker) return alert("Please Locate Me first!");
+  if (!userMarker) return alert("Please click 'Locate Me' first");
   let u = userMarker.getLatLng();
   let min = Infinity, near;
 
   markers.forEach(m => {
-    if (m.data.category.toLowerCase() == type.toLowerCase()) {
+    if (m.data.category === type.toLowerCase()) {
       let d = map.distance(u, [m.data.lat, m.data.lng]);
       if (d < min) { min = d; near = m; }
     }
@@ -160,4 +177,17 @@ function nearest(type) {
     map.setView([near.data.lat, near.data.lng], 20);
     near.marker.openPopup();
   }
-            }
+}
+
+// 8. AUDIO
+function toggleAudio() {
+  let audio = document.getElementById("audio");
+  let btn = document.getElementById("audioBtn");
+  if (audio.paused) {
+    audio.play();
+    btn.innerHTML = "🔊 Audio ON";
+  } else {
+    audio.pause();
+    btn.innerHTML = "🔇 Audio OFF";
+  }
+}
