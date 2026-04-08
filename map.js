@@ -1,24 +1,20 @@
 // =========================================
-// LOYOLA CAMPUS MAP - ZEN ENGINE V2 (FIXED)
+// LOYOLA MAP - FINAL SMART SYSTEM 🔥
 // =========================================
 
-// 1. INITIALIZE MAP
-var map = L.map('map', {
-  attributionControl: false
-}).setView([13.062472, 80.233185], 17);
+// MAP INIT
+var map = L.map('map', { attributionControl: false })
+  .setView([13.062472, 80.233185], 17);
 
-// 2. SATELLITE TILE
 L.tileLayer(
   'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   { maxZoom: 19 }
 ).addTo(map);
 
-// 3. ZOOM POSITION
 map.zoomControl.setPosition('bottomright');
 
-
 // =========================================
-// 🎨 ICONS (FIXED)
+// ICONS
 // =========================================
 var iconConfig = {
   iconSize: [32, 32],
@@ -31,12 +27,11 @@ var icons = {
   lab: L.icon({ ...iconConfig, iconUrl: 'https://cdn-icons-png.flaticon.com/512/1046/1046857.png' }),
   hall: L.icon({ ...iconConfig, iconUrl: 'https://cdn-icons-png.flaticon.com/512/3177/3177361.png' }),
   toilet: L.icon({ ...iconConfig, iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png' }),
-  water: L.icon({ ...iconConfig, iconUrl: 'https://cdn-icons-png.flaticon.com/512/728/728093.png' }) // ✅ FIXED
+  water: L.icon({ ...iconConfig, iconUrl: 'https://cdn-icons-png.flaticon.com/512/728/728093.png' })
 };
 
-
 // =========================================
-// 🎛 LAYERS
+// LAYERS
 // =========================================
 var layers = {
   department: L.layerGroup().addTo(map),
@@ -46,52 +41,69 @@ var layers = {
   water: L.layerGroup().addTo(map)
 };
 
+// =========================================
+// USER DATA (LOCAL STORAGE)
+// =========================================
+var userData = JSON.parse(localStorage.getItem("loyolaUser")) || {
+  name: "",
+  saved: []
+};
 
 // =========================================
-// 📍 LOAD DATA
+// ROUTE
+// =========================================
+var userMarker, routeLine;
+
+function drawRoute(lat, lng) {
+  if (!userMarker) return alert("Click Locate Me first");
+
+  if (routeLine) map.removeLayer(routeLine);
+
+  routeLine = L.polyline(
+    [userMarker.getLatLng(), [lat, lng]],
+    { color: "#D4A64A", weight: 4, dashArray: "6,8" }
+  ).addTo(map);
+
+  map.fitBounds(routeLine.getBounds());
+}
+
+// =========================================
+// MARKERS
 // =========================================
 locations.forEach(function (place) {
 
-  var typeKey = place.type.toLowerCase();
-  var selectedIcon = icons[typeKey] || icons.department;
+  var type = place.type.toLowerCase();
 
   var marker = L.marker([place.lat, place.lng], {
-  icon: selectedIcon
-}).bindPopup(
-  "<b>" + place.name + "</b><br>" +
-  place.description +
-  "<br><br><button onclick='drawRoute(" + place.lat + "," + place.lng + ")'>🧭 Navigate</button>"
-);
+    icon: icons[type]
+  }).bindPopup(`
+    <b>${place.name}</b><br>
+    ${place.description}<br><br>
+    <button onclick="drawRoute(${place.lat},${place.lng})">🧭 Navigate</button>
+    <button onclick="savePlace('${place.name}')">⭐ Save</button>
+  `);
 
-  if (layers[typeKey]) {
-    marker.addTo(layers[typeKey]);
-  }
+  marker.on("click", () => drawRoute(place.lat, place.lng));
+
+  if (layers[type]) marker.addTo(layers[type]);
 });
 
-
-// =========================================
-// 🎛 FILTER CONTROL
-// =========================================
+// FILTER UI
 L.control.layers(null, {
   "Departments": layers.department,
   "Labs": layers.lab,
   "Halls": layers.hall,
   "Toilets": layers.toilet,
   "Water": layers.water
-}, {
-  position: 'topright'
 }).addTo(map);
 
-
 // =========================================
-// 📍 LOCATION
+// LOCATION
 // =========================================
-var userMarker;
-
 function locateUser() {
   map.locate({ setView: true, maxZoom: 18 });
 
-  map.on('locationfound', function (e) {
+  map.on('locationfound', e => {
     if (userMarker) map.removeLayer(userMarker);
 
     userMarker = L.circleMarker(e.latlng, {
@@ -100,98 +112,69 @@ function locateUser() {
       color: "#fff",
       weight: 2,
       fillOpacity: 0.8
-    }).addTo(map)
-      .bindPopup("<b>You are here</b>")
-      .openPopup();
+    }).addTo(map).bindPopup("You are here").openPopup();
   });
 }
 
+// =========================================
+// SAVE PLACE
+// =========================================
+function savePlace(name) {
+  userData.saved.push(name);
+  localStorage.setItem("loyolaUser", JSON.stringify(userData));
+  alert("Saved: " + name);
+}
 
 // =========================================
-// 📏 NEAREST
+// NEAREST
 // =========================================
 function findNearest(type) {
-  if (!userMarker) {
-    alert("Click Locate Me first");
-    return;
-  }
+  if (!userMarker) return alert("Enable location first");
 
-  var userLatLng = userMarker.getLatLng();
-  var nearest = null;
-  var minDist = Infinity;
+  let min = Infinity, nearest;
 
-  locations.forEach(function (place) {
-    if (place.type.toLowerCase() === type) {
-      var dist = map.distance(userLatLng, [place.lat, place.lng]);
-      if (dist < minDist) {
-        minDist = dist;
-        nearest = place;
-      }
+  locations.forEach(p => {
+    if (p.type === type) {
+      let d = map.distance(userMarker.getLatLng(), [p.lat, p.lng]);
+      if (d < min) { min = d; nearest = p; }
     }
   });
 
-  if (nearest) {
-    map.setView([nearest.lat, nearest.lng], 18);
-  }
+  if (nearest) map.setView([nearest.lat, nearest.lng], 18);
 }
 
+// =========================================
+// 🎤 VOICE COMMAND
+// =========================================
+function startVoice() {
+  const recog = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recog.start();
+
+  recog.onresult = e => {
+    let text = e.results[0][0].transcript.toLowerCase();
+
+    locations.forEach(p => {
+      if (text.includes(p.name.toLowerCase())) {
+        drawRoute(p.lat, p.lng);
+      }
+    });
+  };
+}
 
 // =========================================
-// 🎵 AUDIO
+// AUDIO
 // =========================================
 var audio = document.getElementById("anthem");
 var btn = document.getElementById("audioBtn");
 
-window.addEventListener("load", function () {
+window.onload = () => {
   audio.play().catch(() => {
-    document.body.addEventListener("click", function start() {
-      audio.play();
-      document.body.removeEventListener("click", start);
-    });
+    document.body.onclick = () => audio.play();
   });
-});
-
-btn.onclick = function (e) {
-  e.stopPropagation();
-
-  if (audio.paused) {
-    audio.play();
-    btn.innerHTML = "🔊 ON";
-  } else {
-    audio.pause();
-    btn.innerHTML = "🔇 OFF";
-  }
 };
 
-// =========================================
-// 🧭 NAVIGATION SYSTEM
-// =========================================
-
-var routeLine = null;
-
-// Function to draw path
-function drawRoute(destinationLat, destinationLng) {
-
-  if (!userMarker) {
-    alert("Click 'Locate Me' first");
-    return;
-  }
-
-  var userLatLng = userMarker.getLatLng();
-  var destLatLng = [destinationLat, destinationLng];
-
-  // Remove old route
-  if (routeLine) {
-    map.removeLayer(routeLine);
-  }
-
-  // Draw new line
-  routeLine = L.polyline([userLatLng, destLatLng], {
-    color: "#D4A64A", // ZEN Gold
-    weight: 4,
-    dashArray: "6, 8"
-  }).addTo(map);
-
-  // Zoom to fit route
-  map.fitBounds(routeLine.getBounds());
-}
+btn.onclick = e => {
+  e.stopPropagation();
+  audio.paused ? audio.play() : audio.pause();
+  btn.innerHTML = audio.paused ? "🔇 OFF" : "🔊 ON";
+};
