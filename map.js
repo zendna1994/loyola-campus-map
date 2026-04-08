@@ -1,3 +1,30 @@
+// ==========================
+// LOGIN SYSTEM
+// ==========================
+
+var user = JSON.parse(localStorage.getItem("loyolaUser"));
+
+if (user) {
+  document.getElementById("loginScreen").style.display = "none";
+}
+
+// LOGIN FUNCTION
+function login() {
+  var name = document.getElementById("name").value;
+  var role = document.getElementById("role").value;
+
+  var data = { name, role };
+
+  localStorage.setItem("loyolaUser", JSON.stringify(data));
+
+  document.getElementById("loginScreen").style.display = "none";
+}
+
+// EDIT PROFILE
+function editProfile() {
+  document.getElementById("loginScreen").style.display = "flex";
+}
+
 // ======================================
 // LOYOLA MAP - GOOGLE SHEET VERSION
 // ======================================
@@ -63,7 +90,13 @@ var layers = {};
 Object.keys(icons).forEach(type => {
   layers[type] = L.layerGroup().addTo(map);
 });
+var audio = document.getElementById("anthem");
 
+window.onload = () => {
+  audio.play().catch(() => {
+    document.body.onclick = () => audio.play();
+  });
+};
 // ======================================
 // FETCH GOOGLE SHEET DATA
 // ======================================
@@ -110,3 +143,7 @@ fetch(SHEET_URL)
 L.control.layers(null, layers, {
   position: 'topright'
 }).addTo(map);
+function toggleMenu() {
+  var menu = document.getElementById("menu");
+  menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+}
