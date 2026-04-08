@@ -74,9 +74,23 @@ body {
   right:20px;
   display:none;
   flex-direction:column;
+  align-items:flex-end;
+  z-index:1000;
 }
 
-#menu button {
-  margin:5px;
-  padding:8px;
+#menu button, #menu select {
+  margin:6px 0;
+  padding:10px 14px;
+  background:#23365D;
+  color:white;
+  border:none;
+  border-radius:25px;
+  font-size:12px;
+  cursor:pointer;
+  box-shadow:0 3px 8px rgba(0,0,0,0.3);
+}
+
+#menu button:hover {
+  background:#D4A64A;
+  color:#23365D;
 }
