@@ -78,9 +78,9 @@ Promise.all([
       // Create Zen-Styled Marker
       let icon = L.icon({
         iconUrl: icons[obj.category] || icons.hall,
-        iconSize: [36, 36],
-        iconAnchor: [18, 36],
-        popupAnchor: [0, -36]
+        iconSize: [50, 50],
+        iconAnchor: [25, 50],
+        popupAnchor: [0, -50]
       });
 
       let popup = `
