@@ -1,5 +1,5 @@
 /* =========================================
-   ZEN-DNA CAMPUS MAP THEME
+   ZEN-DNA MASTER THEME
    ========================================= */
 
 :root {
@@ -15,40 +15,32 @@ body {
   padding: 0;
   font-family: 'Poppins', sans-serif;
   background: var(--zen-light);
-  color: var(--zen-blue);
   overflow: hidden;
 }
 
-/* HEADER - PERFECT CENTER FIX */
+/* HEADER - PERFECT CENTER ALIGNMENT */
 #header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
+  top: 0; left: 0; right: 0;
   background: var(--zen-blue);
   color: var(--zen-white);
-  
-  /* Centering Logic */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  
   padding: 12px 15px;
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   border-bottom: 4px solid var(--zen-maroon);
   box-sizing: border-box;
+  text-align: center;
 }
 
 .title {
   font-family: 'Playfair Display', serif;
-  font-size: 15px; 
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.5px;
   text-transform: uppercase;
-  text-align: center;
   width: 100%;
 }
 
@@ -58,11 +50,10 @@ body {
   margin-top: 4px;
   font-weight: 600;
   letter-spacing: 1.5px;
-  text-align: center;
   width: 100%;
 }
 
-/* MAP */
+/* MAP FULLSCREEN */
 #map {
   height: calc(100vh - 75px);
   margin-top: 75px;
@@ -70,31 +61,46 @@ body {
   z-index: 1;
 }
 
-/* AUDIO BUTTON */
-#audioBtn {
+/* ZEN CONTROL BUTTONS */
+#controls {
   position: fixed;
-  bottom: 25px;
-  left: 20px;
+  bottom: 20px;
+  right: 20px;
   z-index: 1000;
-  padding: 10px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+#controls button {
+  display: block;
+  width: 160px; /* Uniform width for professional look */
+  margin: 5px 0;
+  padding: 10px 15px;
+  background: var(--zen-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+#controls button:hover {
   background: var(--zen-gold);
   color: var(--zen-blue);
-  border: none;
-  border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-  transition: all 0.3s ease;
+  transform: translateX(-5px);
 }
 
-#audioBtn:hover {
-  background: #c89a3f;
-  transform: translateY(-2px);
+#controls button:active {
+  transform: scale(0.95);
 }
 
-/* POPUP STYLING */
+/* POPUP STYLE */
 .leaflet-popup-content-wrapper {
   border-radius: 12px;
   font-family: 'Poppins', sans-serif;
