@@ -1,145 +1,148 @@
-// LOGIN
-var user = JSON.parse(localStorage.getItem("loyolaUser"));
-if (user) document.getElementById("loginScreen").style.display = "none";
-
-function login() {
-  var name = document.getElementById("name").value;
-  var role = document.getElementById("role").value;
-  localStorage.setItem("loyolaUser", JSON.stringify({name, role}));
-  document.getElementById("loginScreen").style.display = "none";
-}
-
-function editProfile() {
-  document.getElementById("loginScreen").style.display = "flex";
-}
-
-// MAP
 var map = L.map('map',{attributionControl:false})
 .setView([13.0616,80.2347],17);
 
 L.tileLayer(
-'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-{maxZoom:19}
+'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 ).addTo(map);
 
-map.zoomControl.setPosition('topleft');
+// PERSON ICON
+var userIcon = L.icon({
+iconUrl:'https://cdn-icons-png.flaticon.com/512/1946/1946429.png',
+iconSize:[35,35]
+});
 
-// ICONS
 var icons = {
-department:L.icon({iconUrl:'assets/icons/department.png',iconSize:[30,30]}),
-lab:L.icon({iconUrl:'assets/icons/lab.png',iconSize:[30,30]}),
-hall:L.icon({iconUrl:'assets/icons/hall.png',iconSize:[30,30]}),
-auditorium:L.icon({iconUrl:'assets/icons/auditorium.png',iconSize:[30,30]}),
-toilet:L.icon({iconUrl:'assets/icons/toilet.png',iconSize:[30,30]}),
-water:L.icon({iconUrl:'assets/icons/water.png',iconSize:[30,30]}),
-building:L.icon({iconUrl:'assets/icons/building.png',iconSize:[30,30]}),
-gate:L.icon({iconUrl:'assets/icons/gate.png',iconSize:[30,30]}),
-parking:L.icon({iconUrl:'assets/icons/parking.png',iconSize:[30,30]})
+toilet:'assets/icons/toilet.png',
+water:'assets/icons/water.png',
+department:'assets/icons/department.png',
+lab:'assets/icons/lab.png',
+hall:'assets/icons/hall.png'
 };
 
-// LAYERS
-var layers = {};
-Object.keys(icons).forEach(k=>{
-layers[k]=L.layerGroup().addTo(map);
-});
+var all=[];
 
-// STORE DATA
-var allLocations=[];
+function load(url){
+return fetch(url).then(r=>r.text());
+}
 
-// FETCH DATA
-fetch(SHEET_URL)
-.then(r=>r.text())
-.then(csv=>{
-var rows=csv.split("\n").slice(1);
+Promise.all([load(SHEET1),load(SHEET2),load(SHEET3),load(SHEET4)])
+.then(data=>{
 
-rows.forEach(row=>{
-var c=row.split(",");
+data.forEach(csv=>{
+csv.split("\n").slice(1).forEach(r=>{
+let c=r.split(",");
 if(c.length<8)return;
 
-var category=c[0].trim().toLowerCase();
-var name=c[2].trim();
-var building=c[3].trim();
-
-var rawFloor=c[4].trim().toUpperCase();
-var floor=(rawFloor==="G")?"ground":rawFloor;
-
-var lat=parseFloat(c[5]);
-var lng=parseFloat(c[6]);
-var desc=c[7].trim();
-
+let lat=parseFloat(c[c.length-3]);
+let lng=parseFloat(c[c.length-2]);
 if(!lat||!lng)return;
 
-var p={category,name,building,floor,lat,lng,desc};
-allLocations.push(p);
-addMarker(p);
+let name=c[2];
+let category=c[0].toLowerCase();
+let building=c[3];
+let floor=c[4]=="G"?"ground":c[4];
+
+let obj={name,category,building,floor,lat,lng};
+all.push(obj);
+
+let icon=L.icon({iconUrl:icons[category]||icons.hall,iconSize:[35,35]});
+
+L.marker([lat,lng],{icon})
+.addTo(map)
+.bindPopup(name+ "<br>"+building+" | "+floor);
 });
 });
 
-// ADD MARKER
-function addMarker(p){
-var icon=icons[p.category]||icons.building;
+populateBuildings();
+});
 
-var m=L.marker([p.lat,p.lng],{icon})
-.bindPopup(`<b>${p.name}</b><br>${p.desc}<br><small>${p.building} | ${p.floor}</small>`);
-
-if(layers[p.category]) m.addTo(layers[p.category]);
+// SEARCH
+function searchPlace(q){
+q=q.toLowerCase();
+all.forEach(p=>{
+if(p.name.toLowerCase().includes(q)){
+map.setView([p.lat,p.lng],19);
+}
+});
 }
 
-// FLOOR FILTER
+// BUILDING FILTER
+function populateBuildings(){
+let set=new Set(all.map(p=>p.building));
+let sel=document.querySelectorAll("select")[0];
+set.forEach(b=>{
+let o=document.createElement("option");
+o.value=b;o.text=b;
+sel.appendChild(o);
+});
+}
+
+function filterBuilding(b){
+all.forEach(p=>{
+if(b=="all"||p.building==b){
+map.setView([p.lat,p.lng],17);
+}
+});
+}
+
+// FLOOR
 function filterFloor(f){
-Object.values(layers).forEach(l=>l.clearLayers());
-allLocations.forEach(p=>{
-if(f==="all"||p.floor===f) addMarker(p);
+all.forEach(p=>{
+if(f=="all"||p.floor==f){
+map.setView([p.lat,p.lng],17);
+}
 });
 }
 
-// MENU
-function toggleMenu(){
-var m=document.getElementById("menu");
-m.style.display=(m.style.display==="flex")?"none":"flex";
-}
-
-// LOCATION
+// USER
 var userMarker;
+
 function locateUser(){
-map.locate({setView:true,maxZoom:18});
+map.locate({setView:true});
 map.on('locationfound',e=>{
-if(userMarker) map.removeLayer(userMarker);
-userMarker=L.marker(e.latlng).addTo(map).bindPopup("You are here").openPopup();
+if(userMarker)map.removeLayer(userMarker);
+userMarker=L.marker(e.latlng,{icon:userIcon}).addTo(map);
 });
 }
 
 // NEAREST
-function findNearest(type){
-if(!userMarker)return alert("Click Locate first");
-let min=Infinity,n;
-allLocations.forEach(p=>{
-if(p.category===type){
-let d=map.distance(userMarker.getLatLng(),[p.lat,p.lng]);
-if(d<min){min=d;n=p;}
+function nearest(type){
+if(!userMarker)return;
+
+let u=userMarker.getLatLng();
+let min=Infinity,near;
+
+all.forEach(p=>{
+if(p.category==type){
+let d=map.distance(u,[p.lat,p.lng]);
+if(d<min){min=d;near=p;}
 }
 });
-if(n) map.setView([n.lat,n.lng],18);
+
+if(near){
+map.setView([near.lat,near.lng],19);
+L.popup().setLatLng([near.lat,near.lng]).setContent("Nearest "+type).openOn(map);
+}
 }
 
-// VOICE
-function startVoice(){
-let r=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
-r.start();
-r.onresult=e=>{
-let t=e.results[0][0].transcript.toLowerCase();
-allLocations.forEach(p=>{
-if(t.includes(p.name.toLowerCase())){
-map.setView([p.lat,p.lng],18);
+// MENU
+function toggleMenu(){
+let m=document.getElementById("menu");
+m.style.display=m.style.display=="flex"?"none":"flex";
 }
-});
-};
+
+// PROFILE
+function saveProfile(){
+localStorage.setItem("user",document.getElementById("name").value);
+document.getElementById("login").style.display="none";
+}
+
+function editProfile(){
+document.getElementById("login").style.display="flex";
 }
 
 // AUDIO
-var audio=document.getElementById("anthem");
-window.onload=()=>{
-audio.play().catch(()=>{
-document.body.onclick=()=>audio.play();
-});
-};
+var audio=document.getElementById("audio");
+function toggleAudio(){
+audio.paused?audio.play():audio.pause();
+}
