@@ -25,18 +25,32 @@ var hallIcon = L.icon({
   iconUrl: 'https://cdn-icons-png.flaticon.com/128/16841/16841560.png',
   iconSize: [30, 30]
 });
+// Layer groups
+var deptLayer = L.layerGroup().addTo(map);
+var labLayer = L.layerGroup().addTo(map);
+var hallLayer = L.layerGroup().addTo(map);
+// Department
+L.marker([13.0639, 80.2335], { icon: deptIcon })
+  .bindPopup("<b>Zoology Department</b>")
+  .addTo(deptLayer);
 
-// Zoology Department
-L.marker([13.063677,80.233606], { icon: deptIcon })
-  .addTo(map)
-  .bindPopup("<b>Zoology Department</b><br>Advanced Zoology & Biotechnology");
+// Lab
+L.marker([13.0645, 80.2342], { icon: labIcon })
+  .bindPopup("<b>Bio-Nexus Hitech Lab</b>")
+  .addTo(labLayer);
 
-// Bio-Nexus Lab
-L.marker([13.063547,80.233069], { icon: labIcon })
-  .addTo(map)
-  .bindPopup("<b>Bio-Nexus Hitech Lab</b>");
+// Hall
+L.marker([13.0652, 80.2328], { icon: hallIcon })
+  .bindPopup("<b>Bertram Hall</b>")
+  .addTo(hallLayer);
 
-// Bertram Hall
-L.marker([13.062448,80.233185], { icon: hallIcon })
-  .addTo(map)
-  .bindPopup("<b>Bertram Hall</b>");
+// Layer control
+var overlays = {
+  "Departments": deptLayer,
+  "Labs": labLayer,
+  "Halls": hallLayer
+};
+
+L.control.layers(null, overlays, {
+  position: 'bottomright'
+}).addTo(map);
