@@ -56,10 +56,12 @@ locations.forEach(function (place) {
   var selectedIcon = icons[typeKey] || icons.department;
 
   var marker = L.marker([place.lat, place.lng], {
-    icon: selectedIcon
-  }).bindPopup(
-    "<b>" + place.name + "</b><br>" + place.description
-  );
+  icon: selectedIcon
+}).bindPopup(
+  "<b>" + place.name + "</b><br>" +
+  place.description +
+  "<br><br><button onclick='drawRoute(" + place.lat + "," + place.lng + ")'>🧭 Navigate</button>"
+);
 
   if (layers[typeKey]) {
     marker.addTo(layers[typeKey]);
@@ -160,3 +162,36 @@ btn.onclick = function (e) {
     btn.innerHTML = "🔇 OFF";
   }
 };
+
+// =========================================
+// 🧭 NAVIGATION SYSTEM
+// =========================================
+
+var routeLine = null;
+
+// Function to draw path
+function drawRoute(destinationLat, destinationLng) {
+
+  if (!userMarker) {
+    alert("Click 'Locate Me' first");
+    return;
+  }
+
+  var userLatLng = userMarker.getLatLng();
+  var destLatLng = [destinationLat, destinationLng];
+
+  // Remove old route
+  if (routeLine) {
+    map.removeLayer(routeLine);
+  }
+
+  // Draw new line
+  routeLine = L.polyline([userLatLng, destLatLng], {
+    color: "#D4A64A", // ZEN Gold
+    weight: 4,
+    dashArray: "6, 8"
+  }).addTo(map);
+
+  // Zoom to fit route
+  map.fitBounds(routeLine.getBounds());
+}
