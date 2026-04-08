@@ -5,35 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <title>Loyola Campus Map</title>
+  
+  <link rel="icon" type="image/png" href="https://static.wixstatic.com/media/e98a4d_b935ab57540b41bdb320efa88b5e69b1~mv2.png">
 
-  <!-- Google Fonts (ZEN Theme) -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- HEADER (ZEN THEME) -->
   <div id="header">
     <div class="title">
-      LOYOLA COLLEGE (AUTONOMOUS), Chennai - 600034
+      LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
     </div>
     <div class="subtitle">
       College Campus Map
     </div>
   </div>
 
-  <!-- MAP -->
   <div id="map"></div>
 
-  <!-- AUDIO BUTTON -->
-  <button id="audioBtn">🔊 ON</button>
+  <button id="audioBtn">🔊 Audio ON</button>
 
-  <!-- AUDIO -->
   <audio id="anthem" loop>
+    <source src="https://zendna1994.github.io/loyola-campus-map/Loyola%20Anthem.mp3" type="audio/mpeg">
+  </audio>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script src="map.js"></script>
+
+</body>
+</html>
     <source src="https://zendna1994.github.io/loyola-campus-map/Loyola%20Anthem.mp3" type="audio/mpeg">
   </audio>
 
