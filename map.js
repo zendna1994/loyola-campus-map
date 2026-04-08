@@ -38,7 +38,7 @@ var icons = {
   xerox: 'assets/icons/xerox.png',
   shop: 'assets/icons/shop.png',
   smartroom: 'assets/icons/smartroom.png',
-  clubroom: 'assets/icons/clubroom.png'
+  club: 'assets/icons/club.png'
 };
 
 var all = [];
