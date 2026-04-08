@@ -39,9 +39,9 @@ window.onload = function () {
 btn.onclick = function () {
   if (audio.paused) {
     audio.play();
-    btn.innerHTML = "🔊 Audio ON";
+    btn.innerHTML = "🔊 ON";
   } else {
     audio.pause();
-    btn.innerHTML = "🔇 Audio OFF";
+    btn.innerHTML = "🔇 OFF";
   }
 };
