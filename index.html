@@ -1,16 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Loyola Campus Map</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <link rel="stylesheet" href="style.css">
+<title>Loyola Campus Map</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <h2>Welcome</h2>
+
+  <select id="role">
+    <option value="Student">Student</option>
+    <option value="Staff">Staff</option>
+    <option value="HOD">HOD</option>
+  </select>
+
+  <input type="text" id="name" placeholder="Enter your name">
+
+  <button onclick="login()">Enter</button>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="title">LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034</div>
+  <div class="subtitle">College Campus Map</div>
+</div>
+
+<!-- MAP -->
 <div id="map"></div>
+
+<!-- FLOAT BUTTON -->
+<div id="fab" onclick="toggleMenu()">☰</div>
+
+<!-- FLOAT MENU -->
+<div id="menu">
+  <button onclick="locateUser()">📍 Locate</button>
+  <button onclick="findNearest('toilet')">🚻 Toilet</button>
+  <button onclick="findNearest('water')">💧 Water</button>
+  <button onclick="startVoice()">🎤 Voice</button>
+  <button onclick="editProfile()">👤 Profile</button>
+</div>
+
+<audio id="anthem" loop>
+  <source src="assets/audio/loyola-anthem.mp3">
+</audio>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="data/config.js"></script>
