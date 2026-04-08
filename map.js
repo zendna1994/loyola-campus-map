@@ -7,7 +7,7 @@ L.tileLayer(
 
 // USER ICON
 var userIcon = L.icon({
-iconUrl:'https://cdn-icons-png.flaticon.com/512/1946/1946429.png',
+iconUrl:'https://cdn-icons-png.flaticon.com/128/4874/4874722.png',
 iconSize:[38,38]
 });
 
@@ -15,8 +15,15 @@ var icons = {
 toilet:'assets/icons/toilet.png',
 water:'assets/icons/water.png',
 hall:'assets/icons/hall.png',
+auditorium:'assets/icons/auditorium.png',
+building:'assets/icons/building.png',
+gate:'assets/icons/gate.png',
+ground:'assets/icons/ground.png',
+unit:'assets/icons/unit.png',
+parking:'assets/icons/parking.png',
 department:'assets/icons/department.png',
 lab:'assets/icons/lab.png'
+  
 };
 
 var all = [];
