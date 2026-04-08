@@ -3,25 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <title>Loyola Campus Map</title>
 
-  <!-- Leaflet CSS (VERY IMPORTANT for zoom buttons) -->
+  <!-- Google Fonts (ZEN Theme) -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- HEADER (ZEN THEME) -->
   <div id="header">
-    LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
+    <div class="title">
+      LOYOLA COLLEGE (AUTONOMOUS), Chennai - 600034
+    </div>
+    <div class="subtitle">
+      College Campus Map
+    </div>
   </div>
 
   <!-- MAP -->
   <div id="map"></div>
 
-  <!-- AUDIO CONTROL BUTTON -->
-  <button id="audioBtn">🔊 Audio ON</button>
+  <!-- AUDIO BUTTON -->
+  <button id="audioBtn">🔊 ON</button>
 
   <!-- AUDIO -->
   <audio id="anthem" loop>
