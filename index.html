@@ -19,30 +19,25 @@
     <div class="sub">Campus Map</div>
   </div>
 
-  <div id="search-container">
-    <input id="search" autocomplete="off" placeholder="Search department, hall, facility...">
-  </div>
+  <input id="search" autocomplete="off" placeholder="Search department, hall, facility...">
 
   <div id="map"></div>
 
   <div id="fab" onclick="toggleMenu()">☰</div>
 
   <div id="menu">
-    <div class="menu-title">Tools & Navigation</div>
+    <button onclick="locateUser()">📍 Locate Me</button>
     
-    <button onclick="locateUser()" class="menu-btn">📍 Locate Me</button>
-    
-    <div class="util-row">
-      <button onclick="nearest('toilet')" class="menu-btn">🚻 Toilet</button>
-      <button onclick="nearest('water')" class="menu-btn">💧 Water</button>
+    <div style="display: flex; gap: 5px;">
+      <button onclick="nearest('toilet')" style="flex:1;">🚻 Toilet</button>
+      <button onclick="nearest('water')" style="flex:1;">💧 Water</button>
     </div>
 
-    <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio ON</button>
+    <button id="audioBtn" onclick="toggleAudio()" style="background:#D4A64A; color:#23365D; font-weight:700;">🔊 Audio ON</button>
 
-    <div class="filter-label">Filter by Location</div>
-    <select id="buildingFilter" class="zen-select"></select>
+    <select id="buildingFilter"></select>
     
-    <select id="floorFilter" class="zen-select">
+    <select id="floorFilter">
       <option value="all">All Floors</option>
       <option value="ground">Ground Floor</option>
       <option value="1">1st Floor</option>
@@ -55,7 +50,8 @@
   <audio id="audio" loop src="assets/audio/loyola-anthem.mp3"></audio>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="data/config.js"></script> <script src="map.js"></script>
+  <script src="data/config.js"></script>
+  <script src="map.js"></script>
 
 </body>
 </html>
