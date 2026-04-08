@@ -1,70 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Loyola Campus Map</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<link rel="stylesheet" href="style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen">
-  <h2>Welcome</h2>
+<div id="login">
+  <h3>Enter Details</h3>
+  <input id="name" placeholder="Name">
   <select id="role">
     <option>Student</option>
     <option>Staff</option>
-    <option>HOD</option>
   </select>
-  <input type="text" id="name" placeholder="Enter your name">
-  <button onclick="login()">Enter</button>
+  <button onclick="saveProfile()">Continue</button>
 </div>
 
-<!-- HEADER -->
 <div id="header">
-  <div class="title">LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034</div>
-  <div class="subtitle">College Campus Map</div>
+LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034<br>
+<span>Campus Map</span>
 </div>
 
-<!-- MAP -->
+<input id="search" placeholder="Search location..." oninput="searchPlace(this.value)">
+
 <div id="map"></div>
 
-<!-- FLOAT BUTTON -->
 <div id="fab" onclick="toggleMenu()">☰</div>
 
-<!-- MENU -->
 <div id="menu">
+<button onclick="locateUser()">Locate Me</button>
+<button onclick="nearest('toilet')">Toilet</button>
+<button onclick="nearest('water')">Water</button>
+<button onclick="toggleAudio()">Audio</button>
+<button onclick="editProfile()">Profile</button>
 
-  <button onclick="locateUser()">📍 Locate Me</button>
+<select onchange="filterBuilding(this.value)">
+<option value="all">All Buildings</option>
+</select>
 
-  <button onclick="findNearest('toilet')">🚻 Nearest Toilet</button>
-
-  <button onclick="findNearest('water')">💧 Nearest Water</button>
-
-  <button onclick="startVoice()">🎤 Voice</button>
-
-  <button onclick="editProfile()">👤 Profile</button>
-
-  <select onchange="filterFloor(this.value)">
-    <option value="all">All Floors</option>
-    <option value="ground">Ground Floor</option>
-    <option value="1">1st Floor</option>
-    <option value="2">2nd Floor</option>
-    <option value="3">3rd Floor</option>
-    <option value="4">4th Floor</option>
-  </select>
-
+<select onchange="filterFloor(this.value)">
+<option value="all">All Floors</option>
+<option value="ground">Ground</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+</select>
 </div>
 
-<audio id="anthem" loop>
-  <source src="assets/audio/loyola-anthem.mp3">
-</audio>
+<audio id="audio" loop src="assets/audio/loyola-anthem.mp3"></audio>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="data/config.js"></script>
