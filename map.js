@@ -1,33 +1,32 @@
 // ===============================
-// 📍 LOCATION DATA (Must be defined)
+// 📍 LOCATION DATA
 // ===============================
 var locations = [
   {
-    name: "Advanced Zoology & Biotech",
-    type: "department",
-    lat: 13.0618,
-    lng: 80.2345,
-    description: "ZEN - DNA HQ"
+    name: "Advanced Zoology & Biotechnology",
+    type: "Department",
+    lat: 13.063672,
+    lng: 80.233664,
+    description: "Department Office"
   },
   {
-    name: "Molecular Biology Lab",
-    type: "lab",
-    lat: 13.0615,
-    lng: 80.2348,
-    description: "Main Research Facility"
+    name: "Bio-Nexus Hitech Lab",
+    type: "Lab",
+    lat: 13.06155,
+    lng: 80.23485,
+    description: "250 PhD commemorating Lab"
   },
   {
     name: "Bertram Hall",
-    type: "hall",
-    lat: 13.0622,
-    lng: 80.2340,
-    description: "Examination & Events Hall"
+    type: "Auditorium",
+    lat: 13.062472,
+    lng: 80.233185,
+    description: "Library Building"
   }
-  // Add more points here following the same structure
 ];
 
 // ===============================
-// 🗺️ MAP INITIALIZATION
+// 🗺️ MAP ENGINE
 // ===============================
 var map = L.map('map', {
   attributionControl: false
@@ -41,44 +40,34 @@ L.tileLayer(
 map.zoomControl.setPosition('bottomright');
 
 // ===============================
-// 🎨 ICONS (Refined Sizes)
+// 🎨 ZEN ICONS
 // ===============================
+var iconTemplate = {
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32]
+};
+
 var icons = {
-  department: L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/190/190411.png',
-    iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32]
-  }),
-  lab: L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/1046/1046857.png',
-    iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32]
-  }),
-  hall: L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/3177/3177361.png',
-    iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32]
-  }),
-  toilet: L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-    iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32]
-  }),
-  water: L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/728/728093.png',
-    iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32]
-  })
+  department: L.icon({ ...iconTemplate, iconUrl: 'https://cdn-icons-png.flaticon.com/512/190/190411.png' }),
+  lab: L.icon({ ...iconTemplate, iconUrl: 'https://cdn-icons-png.flaticon.com/512/1046/1046857.png' }),
+  hall: L.icon({ ...iconTemplate, iconUrl: 'https://cdn-icons-png.flaticon.com/512/3177/3177361.png' }),
+  toilet: L.icon({ ...iconTemplate, iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png' }),
+  water: L.icon({ ...iconTemplate, iconUrl: 'https://cdn-icons-png.flaticon.com/512/728/728093.png' })
 };
 
 // ===============================
-// 📍 ADD MARKERS FROM DATA
+// 📍 RENDER MARKERS
 // ===============================
 locations.forEach(function (place) {
-  // Use the icon from the list, or fallback to 'department' if type is wrong
   var selectedIcon = icons[place.type] || icons.department;
 
   L.marker([place.lat, place.lng], { icon: selectedIcon })
     .addTo(map)
     .bindPopup(`
-      <div style="font-family: 'Poppins', sans-serif;">
-        <b style="color: #23365D; font-size: 14px;">${place.name}</b><br>
-        <span style="color: #666; font-size: 12px;">${place.description}</span>
+      <div style="font-family: 'Poppins', sans-serif; text-align: left;">
+        <b style="color: #23365D;">${place.name}</b><br>
+        <span style="font-size: 11px; color: #666;">${place.description}</span>
       </div>
     `);
 });
@@ -94,10 +83,10 @@ window.addEventListener("load", function () {
     btn.innerHTML = "🔊 ON";
   }).catch(() => {
     btn.innerHTML = "🔇 OFF";
-    document.body.addEventListener("click", function startOnce() {
+    document.body.addEventListener("click", function start() {
       audio.play();
       btn.innerHTML = "🔊 ON";
-      document.body.removeEventListener("click", startOnce);
+      document.body.removeEventListener("click", start);
     }, { once: true });
   });
 });
@@ -106,9 +95,9 @@ btn.onclick = function (e) {
   e.stopPropagation();
   if (audio.paused) {
     audio.play();
-    btn.innerHTML = "🔊 ON";
+    this.innerHTML = "🔊 ON";
   } else {
     audio.pause();
-    btn.innerHTML = "🔇 OFF";
+    this.innerHTML = "🔇 OFF";
   }
 };
