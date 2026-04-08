@@ -1,41 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Loyola Campus Map | ZEN-DNA</title>
-  
-  <link rel="icon" type="image/png" href="https://static.wixstatic.com/media/e98a4d_b935ab57540b41bdb320efa88b5e69b1~mv2.png">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Loyola Campus Map | ZEN-DNA</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-  <link rel="stylesheet" href="style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-  <div id="header">
-    <div class="title">LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034</div>
-    <div class="subtitle">College Campus Map</div>
-  </div>
+<!-- LOGIN -->
+<div id="loginScreen">
+  <h2>Welcome</h2>
+  <select id="role">
+    <option>Student</option>
+    <option>Staff</option>
+    <option>HOD</option>
+  </select>
+  <input type="text" id="username" placeholder="Enter Name"/>
+  <button onclick="login()">Enter</button>
+</div>
 
-  <div id="map"></div>
+<!-- HEADER -->
+<div id="header">
+  <div class="title">LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034</div>
+  <div class="subtitle">College Campus Map</div>
+</div>
 
-  <div id="controls">
-    <button onclick="locateUser()">📍 Locate Me</button>
-    <button onclick="findNearest('toilet')">🚻 Nearest Toilet</button>
-    <button onclick="findNearest('water')">💧 Nearest Water</button>
-    <button id="audioBtn" style="background: #D4A64A; color: #23365D; font-weight: 700;">🔊 Audio ON</button>
-  </div>
+<div id="map"></div>
 
-  <audio id="anthem" loop>
-    <source src="https://zendna1994.github.io/loyola-campus-map/Loyola%20Anthem.mp3" type="audio/mpeg">
-  </audio>
+<!-- CONTROLS -->
+<div id="controls">
+  <button onclick="locateUser()">📍 Locate Me</button>
+  <button onclick="findNearest('toilet')">🚻 Toilet</button>
+  <button onclick="findNearest('water')">💧 Water</button>
+  <button onclick="startVoice()">🎤 Voice</button>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="data.js"></script>
-  <script src="map.js"></script>
+  <!-- FLOOR -->
+  <select onchange="filterFloor(this.value)">
+    <option value="all">All Floors</option>
+    <option value="ground">Ground</option>
+    <option value="1">1st Floor</option>
+    <option value="2">2nd Floor</option>
+  </select>
+
+  <button id="audioBtn">🔊 ON</button>
+</div>
+
+<audio id="anthem" loop>
+  <source src="https://zendna1994.github.io/loyola-campus-map/Loyola%20Anthem.mp3">
+</audio>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="data.js"></script>
+<script src="map.js"></script>
 
 </body>
 </html>
