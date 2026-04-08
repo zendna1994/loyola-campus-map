@@ -3,20 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Loyola College Campus Map</title>
+  <title>Loyola Campus Map</title>
 
-  <!-- Leaflet CSS -->
+  <!-- Leaflet CSS (VERY IMPORTANT for zoom buttons) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+  <!-- HEADER -->
+  <div id="header">
+    LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
+  </div>
+
+  <!-- MAP -->
   <div id="map"></div>
+
+  <!-- AUDIO CONTROL BUTTON -->
+  <button id="audioBtn">🔊 Audio ON</button>
+
+  <!-- AUDIO -->
+  <audio id="anthem" loop>
+    <source src="https://zendna1994.github.io/loyola-campus-map/Loyola%20Anthem.mp3" type="audio/mpeg">
+  </audio>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+  <!-- MAP SCRIPT -->
   <script src="map.js"></script>
 
 </body>
