@@ -1,50 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Loyola Campus Map</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Loyola Campus Map | ZEN-DNA</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="https://static.wixstatic.com/media/e98a4d_b935ab57540b41bdb320efa88b5e69b1~mv2.png">
 
-<link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div id="header">
-LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
-<div class="sub">Campus Map</div>
-</div>
+  <div id="header">
+    LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
+    <div class="sub">Campus Map</div>
+  </div>
 
-<input id="search" placeholder="Search department, hall, facility...">
+  <div id="search-container">
+    <input id="search" autocomplete="off" placeholder="Search department, hall, facility...">
+  </div>
 
-<div id="map"></div>
+  <div id="map"></div>
 
-<div id="fab" onclick="toggleMenu()">☰</div>
+  <div id="fab" onclick="toggleMenu()">☰</div>
 
-<div id="menu">
-  <button onclick="locateUser()">📍 Locate Me</button>
-  <button onclick="nearest('toilet')">🚻 Toilet</button>
-  <button onclick="nearest('water')">💧 Water</button>
-  <button onclick="toggleAudio()">🔊 Audio</button>
+  <div id="menu">
+    <div class="menu-title">Tools & Navigation</div>
+    
+    <button onclick="locateUser()" class="menu-btn">📍 Locate Me</button>
+    
+    <div class="util-row">
+      <button onclick="nearest('toilet')" class="menu-btn">🚻 Toilet</button>
+      <button onclick="nearest('water')" class="menu-btn">💧 Water</button>
+    </div>
 
-  <select id="buildingFilter"></select>
-  <select id="floorFilter">
-    <option value="all">All Floors</option>
-    <option value="ground">Ground</option>
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
-    <option value="4">4</option>
-  </select>
-</div>
+    <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio ON</button>
 
-<audio id="audio" loop src="assets/audio/loyola-anthem.mp3"></audio>
+    <div class="filter-label">Filter by Location</div>
+    <select id="buildingFilter" class="zen-select"></select>
+    
+    <select id="floorFilter" class="zen-select">
+      <option value="all">All Floors</option>
+      <option value="ground">Ground Floor</option>
+      <option value="1">1st Floor</option>
+      <option value="2">2nd Floor</option>
+      <option value="3">3rd Floor</option>
+      <option value="4">4th Floor</option>
+    </select>
+  </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="data/config.js"></script>
-<script src="map.js"></script>
+  <audio id="audio" loop src="assets/audio/loyola-anthem.mp3"></audio>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="data/config.js"></script> <script src="map.js"></script>
 
 </body>
 </html>
