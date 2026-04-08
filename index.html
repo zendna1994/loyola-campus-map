@@ -14,18 +14,15 @@
 
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div id="loginScreen">
   <h2>Welcome</h2>
-
   <select id="role">
-    <option value="Student">Student</option>
-    <option value="Staff">Staff</option>
-    <option value="HOD">HOD</option>
+    <option>Student</option>
+    <option>Staff</option>
+    <option>HOD</option>
   </select>
-
   <input type="text" id="name" placeholder="Enter your name">
-
   <button onclick="login()">Enter</button>
 </div>
 
@@ -41,13 +38,28 @@
 <!-- FLOAT BUTTON -->
 <div id="fab" onclick="toggleMenu()">☰</div>
 
-<!-- FLOAT MENU -->
+<!-- MENU -->
 <div id="menu">
-  <button onclick="locateUser()">📍 Locate</button>
-  <button onclick="findNearest('toilet')">🚻 Toilet</button>
-  <button onclick="findNearest('water')">💧 Water</button>
+
+  <button onclick="locateUser()">📍 Locate Me</button>
+
+  <button onclick="findNearest('toilet')">🚻 Nearest Toilet</button>
+
+  <button onclick="findNearest('water')">💧 Nearest Water</button>
+
   <button onclick="startVoice()">🎤 Voice</button>
+
   <button onclick="editProfile()">👤 Profile</button>
+
+  <select onchange="filterFloor(this.value)">
+    <option value="all">All Floors</option>
+    <option value="ground">Ground Floor</option>
+    <option value="1">1st Floor</option>
+    <option value="2">2nd Floor</option>
+    <option value="3">3rd Floor</option>
+    <option value="4">4th Floor</option>
+  </select>
+
 </div>
 
 <audio id="anthem" loop>
