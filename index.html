@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Loyola Campus Map</title>
+  <title>Loyola Campus Map | ZEN-DNA</title>
   
   <link rel="icon" type="image/png" href="https://static.wixstatic.com/media/e98a4d_b935ab57540b41bdb320efa88b5e69b1~mv2.png">
 
@@ -16,24 +16,24 @@
 <body>
 
   <div id="header">
-    <div class="title">
-      LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
-    </div>
-    <div class="subtitle">
-      College Campus Map
-    </div>
+    <div class="title">LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034</div>
+    <div class="subtitle">College Campus Map</div>
   </div>
 
   <div id="map"></div>
 
-  <button id="audioBtn">🔊 ON</button>
+  <div id="controls">
+    <button onclick="locateUser()">📍 Locate Me</button>
+    <button onclick="findNearest('toilet')">🚻 Nearest Toilet</button>
+    <button onclick="findNearest('water')">💧 Nearest Water</button>
+    <button id="audioBtn" style="background: #D4A64A; color: #23365D; font-weight: 700;">🔊 Audio ON</button>
+  </div>
 
   <audio id="anthem" loop>
     <source src="https://zendna1994.github.io/loyola-campus-map/Loyola%20Anthem.mp3" type="audio/mpeg">
   </audio>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
   <script src="data.js"></script>
   <script src="map.js"></script>
 
