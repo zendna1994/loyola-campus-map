@@ -5,7 +5,7 @@
 // 1. CREATE MAP
 var map = L.map('map', {
   zoomControl: true
-}).setView([13.0643, 80.2337], 17);
+}).setView([13.061592,80.234699], 17);
 
 // --------------------------------
 // 🔧 CHANGE THIS ONLY IF NEEDED
