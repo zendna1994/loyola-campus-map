@@ -1,35 +1,31 @@
+// ======================================
+// LOYOLA MAP - FINAL (WITH FLOOR SYSTEM)
+// ======================================
+
 // ==========================
 // LOGIN SYSTEM
 // ==========================
-
 var user = JSON.parse(localStorage.getItem("loyolaUser"));
 
 if (user) {
   document.getElementById("loginScreen").style.display = "none";
 }
 
-// LOGIN FUNCTION
 function login() {
   var name = document.getElementById("name").value;
   var role = document.getElementById("role").value;
 
-  var data = { name, role };
-
-  localStorage.setItem("loyolaUser", JSON.stringify(data));
-
+  localStorage.setItem("loyolaUser", JSON.stringify({ name, role }));
   document.getElementById("loginScreen").style.display = "none";
 }
 
-// EDIT PROFILE
 function editProfile() {
   document.getElementById("loginScreen").style.display = "flex";
 }
 
-// ======================================
-// LOYOLA MAP - GOOGLE SHEET VERSION
-// ======================================
-
+// ==========================
 // MAP INIT
+// ==========================
 var map = L.map('map', { attributionControl: false })
   .setView([13.0616, 80.2347], 17);
 
@@ -40,66 +36,37 @@ L.tileLayer(
 
 map.zoomControl.setPosition('topleft');
 
-// ======================================
-// ICONS (USE YOUR GITHUB LINKS)
-// ======================================
-
+// ==========================
+// ICONS (USE YOUR LINKS)
+// ==========================
 var icons = {
-  department: L.icon({
-    iconUrl: 'assets/icons/department.png',
-    iconSize: [30, 30]
-  }),
-  lab: L.icon({
-    iconUrl: 'assets/icons/lab.png',
-    iconSize: [30, 30]
-  }),
-  hall: L.icon({
-    iconUrl: 'assets/icons/hall.png',
-    iconSize: [30, 30]
-  }),
-  auditorium: L.icon({
-    iconUrl: 'assets/icons/auditorium.png',
-    iconSize: [30, 30]
-  }),
-  toilet: L.icon({
-    iconUrl: 'assets/icons/toilet.png',
-    iconSize: [30, 30]
-  }),
-  water: L.icon({
-    iconUrl: 'assets/icons/water.png',
-    iconSize: [30, 30]
-  }),
-  building: L.icon({
-    iconUrl: 'assets/icons/building.png',
-    iconSize: [30, 30]
-  }),
-  gate: L.icon({
-    iconUrl: 'assets/icons/gate.png',
-    iconSize: [30, 30]
-  }),
-  parking: L.icon({
-    iconUrl: 'assets/icons/parking.png',
-    iconSize: [30, 30]
-  })
+  department: L.icon({ iconUrl: 'assets/icons/department.png', iconSize: [30,30] }),
+  lab: L.icon({ iconUrl: 'assets/icons/lab.png', iconSize: [30,30] }),
+  hall: L.icon({ iconUrl: 'assets/icons/hall.png', iconSize: [30,30] }),
+  auditorium: L.icon({ iconUrl: 'assets/icons/auditorium.png', iconSize: [30,30] }),
+  toilet: L.icon({ iconUrl: 'assets/icons/toilet.png', iconSize: [30,30] }),
+  water: L.icon({ iconUrl: 'assets/icons/water.png', iconSize: [30,30] }),
+  building: L.icon({ iconUrl: 'assets/icons/building.png', iconSize: [30,30] }),
+  gate: L.icon({ iconUrl: 'assets/icons/gate.png', iconSize: [30,30] }),
+  parking: L.icon({ iconUrl: 'assets/icons/parking.png', iconSize: [30,30] })
 };
 
-// ======================================
+// ==========================
 // LAYERS
-// ======================================
+// ==========================
 var layers = {};
 Object.keys(icons).forEach(type => {
   layers[type] = L.layerGroup().addTo(map);
 });
-var audio = document.getElementById("anthem");
 
-window.onload = () => {
-  audio.play().catch(() => {
-    document.body.onclick = () => audio.play();
-  });
-};
-// ======================================
-// FETCH GOOGLE SHEET DATA
-// ======================================
+// ==========================
+// STORE ALL LOCATIONS
+// ==========================
+var allLocations = [];
+
+// ==========================
+// FETCH GOOGLE SHEET
+// ==========================
 fetch(SHEET_URL)
   .then(res => res.text())
   .then(csv => {
@@ -114,36 +81,136 @@ fetch(SHEET_URL)
       var category = cols[0].trim().toLowerCase();
       var name = cols[2].trim();
       var building = cols[3].trim();
-      var floor = cols[4].trim();
+
+      // FLOOR FIX (G → ground)
+      var rawFloor = cols[4].trim().toUpperCase();
+      var floor = rawFloor === "G" ? "ground" : rawFloor;
+
       var lat = parseFloat(cols[5]);
       var lng = parseFloat(cols[6]);
       var desc = cols[7].trim();
 
       if (!lat || !lng) return;
 
-      var icon = icons[category] || icons.building;
+      var place = { category, name, building, floor, lat, lng, desc };
 
-      var marker = L.marker([lat, lng], { icon: icon })
-        .bindPopup(`
-          <b>${name}</b><br>
-          ${desc}<br>
-          <small>${building} | Floor: ${floor}</small>
-        `);
+      allLocations.push(place);
 
-      if (layers[category]) {
-        marker.addTo(layers[category]);
-      }
+      addMarker(place);
     });
 
   });
 
-// ======================================
-// FILTER CONTROL
-// ======================================
-L.control.layers(null, layers, {
-  position: 'topright'
-}).addTo(map);
+// ==========================
+// ADD MARKER FUNCTION
+// ==========================
+function addMarker(place) {
+
+  var icon = icons[place.category] || icons.building;
+
+  var marker = L.marker([place.lat, place.lng], { icon })
+    .bindPopup(`
+      <b>${place.name}</b><br>
+      ${place.desc}<br>
+      <small>${place.building} | Floor: ${place.floor}</small>
+    `);
+
+  if (layers[place.category]) {
+    marker.addTo(layers[place.category]);
+  }
+}
+
+// ==========================
+// FLOOR FILTER
+// ==========================
+function filterFloor(selectedFloor) {
+
+  // clear all layers
+  Object.values(layers).forEach(layer => layer.clearLayers());
+
+  allLocations.forEach(place => {
+
+    if (selectedFloor === "all" || place.floor === selectedFloor) {
+      addMarker(place);
+    }
+
+  });
+}
+
+// ==========================
+// LOCATE USER
+// ==========================
+var userMarker;
+
+function locateUser() {
+  map.locate({ setView: true, maxZoom: 18 });
+
+  map.on('locationfound', function (e) {
+    if (userMarker) map.removeLayer(userMarker);
+
+    userMarker = L.marker(e.latlng)
+      .addTo(map)
+      .bindPopup("You are here")
+      .openPopup();
+  });
+}
+
+// ==========================
+// NEAREST
+// ==========================
+function findNearest(type) {
+  if (!userMarker) return alert("Click Locate first");
+
+  let min = Infinity, nearest;
+
+  allLocations.forEach(p => {
+    if (p.category === type) {
+      let d = map.distance(userMarker.getLatLng(), [p.lat, p.lng]);
+      if (d < min) {
+        min = d;
+        nearest = p;
+      }
+    }
+  });
+
+  if (nearest) {
+    map.setView([nearest.lat, nearest.lng], 18);
+  }
+}
+
+// ==========================
+// VOICE
+// ==========================
+function startVoice() {
+  let r = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  r.start();
+
+  r.onresult = e => {
+    let text = e.results[0][0].transcript.toLowerCase();
+
+    allLocations.forEach(p => {
+      if (text.includes(p.name.toLowerCase())) {
+        map.setView([p.lat, p.lng], 18);
+      }
+    });
+  };
+}
+
+// ==========================
+// MENU TOGGLE
+// ==========================
 function toggleMenu() {
   var menu = document.getElementById("menu");
   menu.style.display = menu.style.display === "flex" ? "none" : "flex";
 }
+
+// ==========================
+// AUDIO
+// ==========================
+var audio = document.getElementById("anthem");
+
+window.onload = () => {
+  audio.play().catch(() => {
+    document.body.onclick = () => audio.play();
+  });
+};
