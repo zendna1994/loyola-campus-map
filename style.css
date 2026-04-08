@@ -1,112 +1,63 @@
-/* =========================================
-   ZEN-DNA MASTER THEME
-   ========================================= */
-
-:root {
-  --zen-blue: #23365D;
-  --zen-maroon: #6C232E;
-  --zen-gold: #D4A64A;
-  --zen-light: #f5f7fb;
-  --zen-white: #ffffff;
-}
-
 body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Poppins', sans-serif;
-  background: var(--zen-light);
-  overflow: hidden;
+  margin:0;
+  font-family:Poppins;
+  background:#f5f7fb;
 }
 
-/* HEADER - PERFECT CENTER ALIGNMENT */
+#loginScreen {
+  position:fixed;
+  inset:0;
+  background:#23365D;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:2000;
+}
+
+#loginScreen input, #loginScreen select {
+  margin:10px;
+  padding:10px;
+  border-radius:6px;
+  border:none;
+}
+
+#loginScreen button {
+  padding:10px 20px;
+  background:#D4A64A;
+  border:none;
+  cursor:pointer;
+}
+
 #header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  background: var(--zen-blue);
-  color: var(--zen-white);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 15px;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  border-bottom: 4px solid var(--zen-maroon);
-  box-sizing: border-box;
-  text-align: center;
+  position:fixed;
+  top:0;
+  width:100%;
+  background:#23365D;
+  color:white;
+  text-align:center;
+  padding:10px;
+  z-index:1000;
 }
 
-.title {
-  font-family: 'Playfair Display', serif;
-  font-size: 15px;
-  font-weight: 700;
-  text-transform: uppercase;
-  width: 100%;
-}
+.title { font-family:'Playfair Display'; font-size:16px; }
+.subtitle { font-size:12px; color:#D4A64A; }
 
-.subtitle {
-  font-size: 11px;
-  color: var(--zen-gold);
-  margin-top: 4px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  width: 100%;
-}
-
-/* MAP FULLSCREEN */
 #map {
-  height: calc(100vh - 75px);
-  margin-top: 75px;
-  width: 100%;
-  z-index: 1;
+  height:calc(100vh - 60px);
+  margin-top:60px;
 }
 
-/* ZEN CONTROL BUTTONS */
 #controls {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  z-index:1000;
 }
 
-#controls button {
-  display: block;
-  width: 160px; /* Uniform width for professional look */
-  margin: 5px 0;
-  padding: 10px 15px;
-  background: var(--zen-blue);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  transition: all 0.3s ease;
-  text-align: left;
-}
-
-#controls button:hover {
-  background: var(--zen-gold);
-  color: var(--zen-blue);
-  transform: translateX(-5px);
-}
-
-#controls button:active {
-  transform: scale(0.95);
-}
-
-/* POPUP STYLE */
-.leaflet-popup-content-wrapper {
-  border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
-}
-
-@media (min-width: 768px) {
-  .title { font-size: 19px; }
-  .subtitle { font-size: 13px; }
+#controls button, #controls select {
+  display:block;
+  margin:5px;
+  padding:8px;
 }
