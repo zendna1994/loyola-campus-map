@@ -6,50 +6,37 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div id="login">
-  <h3>Enter Details</h3>
-  <input id="name" placeholder="Name">
-  <select id="role">
-    <option>Student</option>
-    <option>Staff</option>
-  </select>
-  <button onclick="saveProfile()">Continue</button>
-</div>
-
 <div id="header">
-LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034<br>
-<span>Campus Map</span>
+LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
+<div class="sub">Campus Map</div>
 </div>
 
-<input id="search" placeholder="Search location..." oninput="searchPlace(this.value)">
+<input id="search" placeholder="Search department, hall, facility...">
 
 <div id="map"></div>
 
 <div id="fab" onclick="toggleMenu()">☰</div>
 
 <div id="menu">
-<button onclick="locateUser()">Locate Me</button>
-<button onclick="nearest('toilet')">Toilet</button>
-<button onclick="nearest('water')">Water</button>
-<button onclick="toggleAudio()">Audio</button>
-<button onclick="editProfile()">Profile</button>
+  <button onclick="locateUser()">📍 Locate Me</button>
+  <button onclick="nearest('toilet')">🚻 Toilet</button>
+  <button onclick="nearest('water')">💧 Water</button>
+  <button onclick="toggleAudio()">🔊 Audio</button>
 
-<select onchange="filterBuilding(this.value)">
-<option value="all">All Buildings</option>
-</select>
-
-<select onchange="filterFloor(this.value)">
-<option value="all">All Floors</option>
-<option value="ground">Ground</option>
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-</select>
+  <select id="buildingFilter"></select>
+  <select id="floorFilter">
+    <option value="all">All Floors</option>
+    <option value="ground">Ground</option>
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+  </select>
 </div>
 
 <audio id="audio" loop src="assets/audio/loyola-anthem.mp3"></audio>
