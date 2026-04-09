@@ -3,119 +3,138 @@ L.control.zoom({ position: 'topleft' }).addTo(map);
 
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 25, maxNativeZoom: 19 }).addTo(map);
 
-var all = [], markers = [], userMarker, currentRouteLine;
+var all = [], markers = [], userMarker = null, currentRouteLine = null;
+var watchID = null;
+var audio = document.getElementById("audio");
 
-// 1. DATA LOADING
+// --- AUDIO AUTOPLAY WORKAROUND ---
+function initAudioOnInteraction() {
+    audio.play().then(() => {
+        document.getElementById("audioBtn").innerHTML = "🔊 Audio ON";
+    }).catch(() => {
+        // Wait for first user click to start
+        document.body.addEventListener('click', () => {
+            audio.play();
+            document.getElementById("audioBtn").innerHTML = "🔊 Audio ON";
+        }, { once: true });
+    });
+}
+initAudioOnInteraction();
+
+// --- DATA & ADVANCED FILTER ---
 Promise.all([fetch(SHEET1).then(r=>r.text()), fetch(SHEET2).then(r=>r.text()), fetch(SHEET3).then(r=>r.text()), fetch(SHEET4).then(r=>r.text())])
 .then(data => {
     data.forEach((csv, idx) => {
         csv.split("\n").slice(1).forEach(row => {
             let c = row.split(",").map(v => v.trim());
             if(c.length < 7) return;
-            
-            // Unified Mapping based on your new sheet formats
-            let obj = (idx === 0) ? 
-                { cat: c[0], school: c[1], name: c[2], bldg: c[3], floor: c[4], room: c[5], lat: parseFloat(c[6]), lng: parseFloat(c[7]), desc: c[8] } :
-                { cat: c[0], type: c[1], name: c[2], bldg: c[3], floor: c[4], room: c[5], lat: parseFloat(c[6]), lng: parseFloat(c[7]), desc: c[8] };
-
-            if(!isNaN(obj.lat)) {
-                all.push(obj);
-                createMarker(obj);
-            }
+            let obj = { cat: c[0], school: (idx===0?c[1]:""), name: c[2], bldg: c[3], floor: c[4], room: c[5], lat: parseFloat(c[6]), lng: parseFloat(c[7]), desc: c[8] };
+            if(!isNaN(obj.lat)) { all.push(obj); createMarker(obj); }
         });
     });
-    populateBuildings();
+    initAdvancedFilters();
 });
 
 function createMarker(obj) {
     let icon = L.icon({ iconUrl: `assets/icons/${obj.cat.toLowerCase()}.png`, iconSize:[40,40], iconAnchor:[20,40], popupAnchor:[0,-40] });
-    let popup = `
-        <div class="popup-container">
-            <img src="assets/images/loyola_centenary.png" class="watermark-img">
-            <div class="popup-title">${obj.name || obj.bldg}</div>
-            <div class="popup-sub" style="position:relative; z-index:1;">
-                ${obj.bldg ? "Bldg: "+obj.bldg+"<br>" : ""}
-                ${obj.room ? "Room: "+obj.room : ""}
-            </div>
-            <button onclick="navigateToPoint(${obj.lat}, ${obj.lng}, '${obj.name || obj.bldg}')" style="width:100%; margin-top:8px; background:#23365D; color:white; border:none; border-radius:4px; cursor:pointer;">Navigate</button>
-        </div>`;
+    let popup = `<div class="popup-container"><img src="assets/images/loyola_centenary.png" class="watermark-img"><b>${obj.name||obj.bldg}</b><br><small>${obj.bldg||""}</small><br><button onclick="startNavigation([${obj.lat}, ${obj.lng}], '${obj.name||obj.bldg}')" style="width:100%; background:#23365D; color:white; border:none; padding:5px; border-radius:4px; margin-top:8px; cursor:pointer;">NAVIGATE</button></div>`;
     let m = L.marker([obj.lat, obj.lng], {icon}).bindPopup(popup).addTo(map);
     markers.push({data: obj, marker: m});
 }
 
-// 2. LIVE TRACKING
-function locateUser() {
-    map.locate({setView: true, watch: true, enableHighAccuracy: true});
-    map.on('locationfound', e => {
-        if (!userMarker) {
-            userMarker = L.marker(e.latlng, { icon: L.icon({iconUrl:'https://cdn-icons-png.flaticon.com/128/4874/4874722.png', iconSize:[40,40]}) }).addTo(map);
+function initAdvancedFilters() {
+    let schools = [...new Set(all.map(i => i.school).filter(s => s))];
+    let cats = [...new Set(all.map(i => i.cat).filter(c => c))];
+    
+    let schoolGroup = document.getElementById("filter-schools");
+    let catGroup = document.getElementById("filter-cats");
+
+    schools.forEach(s => schoolGroup.innerHTML += `<option value="s:${s}">${s}</option>`);
+    cats.forEach(c => catGroup.innerHTML += `<option value="c:${c}">${c.toUpperCase()}</option>`);
+
+    document.getElementById("advFilter").onchange = function(e) {
+        let val = e.target.value;
+        markers.forEach(m => {
+            let show = false;
+            if(val === "all") show = true;
+            else if(val.startsWith("s:")) show = (m.data.school === val.split(":")[1]);
+            else if(val.startsWith("c:")) show = (m.data.cat === val.split(":")[1]);
+            
+            if(show) map.addLayer(m.marker); else map.removeLayer(m.marker);
+        });
+    };
+}
+
+// --- NAVIGATION & LIVE TRACKING ---
+function startNavigation(destLatLng, name) {
+    // 1. Get User Location First
+    navigator.geolocation.getCurrentPosition((pos) => {
+        const userPos = [pos.coords.latitude, pos.coords.longitude];
+        
+        // 2. Set user marker
+        if(!userMarker) {
+            userMarker = L.marker(userPos, { icon: L.icon({iconUrl:'https://cdn-icons-png.flaticon.com/128/4874/4874722.png', iconSize:[40,40]}) }).addTo(map);
         } else {
-            userMarker.setLatLng(e.latlng);
+            userMarker.setLatLng(userPos);
         }
-        if (currentRouteLine) updateNavigationLine(e.latlng);
-    });
+
+        // 3. Draw Path
+        if(currentRouteLine) map.removeLayer(currentRouteLine);
+        currentRouteLine = L.polyline([userPos, destLatLng], {color: '#6C232E', weight: 5, dashArray: '10, 10'}).addTo(map);
+        map.fitBounds(currentRouteLine.getBounds(), {padding: [100,100]});
+
+        // 4. Show Panel
+        document.getElementById("route-panel").style.display = "block";
+        updateRouteStats(userPos, destLatLng, name);
+
+        // 5. START LIVE TRACKING ONLY NOW
+        startLiveTracking(destLatLng, name);
+    }, () => alert("Enable GPS to navigate."));
 }
 
-// 3. NAVIGATION ENGINE
-function navigateToPoint(lat, lng, name) {
-    if (!userMarker) return alert("Click 'Locate Me' first!");
-    let start = userMarker.getLatLng();
-    let end = [lat, lng];
-
-    if (currentRouteLine) map.removeLayer(currentRouteLine);
-    currentRouteLine = L.polyline([start, end], {color: '#6C232E', weight: 4, dashArray: '10, 10'}).addTo(map);
-    map.fitBounds(currentRouteLine.getBounds(), {padding: [50,50]});
-
-    let dist = map.distance(start, end);
-    document.getElementById("route-panel").style.display = "block";
-    document.getElementById("route-stats").innerHTML = `<b>Dest:</b> ${name}<br>🚶 ${Math.round(dist)}m (${Math.round(dist/80)} min)`;
+function startLiveTracking(dest, name) {
+    if(watchID) navigator.geolocation.clearWatch(watchID);
+    watchID = navigator.geolocation.watchPosition((pos) => {
+        let newPos = [pos.coords.latitude, pos.coords.longitude];
+        userMarker.setLatLng(newPos);
+        currentRouteLine.setLatLngs([newPos, dest]);
+        updateRouteStats(newPos, dest, name);
+    }, null, { enableHighAccuracy: true });
 }
 
-function updateNavigationLine(newPos) {
-    let dest = currentRouteLine.getLatLngs()[1];
-    currentRouteLine.setLatLngs([newPos, dest]);
+function updateRouteStats(start, end, name) {
+    let d = map.distance(start, end);
+    document.getElementById("route-stats").innerHTML = `<b>To:</b> ${name}<br>🚶 ${Math.round(d)}m (${Math.round(d/80)} min)`;
 }
 
 function clearNavigation() {
     if(currentRouteLine) map.removeLayer(currentRouteLine);
+    if(watchID) navigator.geolocation.clearWatch(watchID);
     document.getElementById("route-panel").style.display = "none";
+    currentRouteLine = null; watchID = null;
 }
 
-// 4. SMART SEARCH
-function showSuggestions() {
-    let q = document.getElementById("search").value.toLowerCase();
-    let box = document.getElementById("suggestions-box");
-    if(q.length < 2) { box.style.display = "none"; return; }
-    
-    let matches = all.filter(i => (i.name||"").toLowerCase().includes(q) || (i.bldg||"").toLowerCase().includes(q)).slice(0,5);
-    box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="navigateToPoint(${m.lat},${m.lng},'${m.name||m.bldg}')"><span>${m.name||m.bldg}</span><span style="color:#6C232E; font-size:9px;">${m.cat}</span></div>`).join('');
-    box.style.display = "block";
-}
-
-// 5. HELP WIZARD
-function openHelpWizard() {
-    let choice = prompt("What do you need? \n1. Find Department \n2. Nearest Restroom/Water \n3. Exit Gates");
-    if(choice == "1") {
-        let school = prompt("Enter School (e.g., Life Sciences):");
-        let found = all.find(i => i.school && i.school.toLowerCase().includes(school.toLowerCase()));
-        if(found) navigateToPoint(found.lat, found.lng, found.name);
-    } else if(choice == "2") { nearest('toilet'); }
-    else if(choice == "3") { nearest('gate'); }
-}
-
+// --- UTILS ---
 function toggleMenu() {
     let m = document.getElementById("menu");
     m.style.display = (m.style.display === "flex") ? "none" : "flex";
 }
 
+function toggleAudio() {
+    if (audio.paused) { audio.play(); document.getElementById("audioBtn").innerHTML = "🔊 Audio ON"; }
+    else { audio.pause(); document.getElementById("audioBtn").innerHTML = "🔇 Audio OFF"; }
+}
+
 function nearest(cat) {
-    if(!userMarker) return alert("Locate yourself first!");
-    let u = userMarker.getLatLng(), min = Infinity, near;
-    markers.forEach(m => {
-        if(m.data.cat.toLowerCase() === cat) {
-            let d = map.distance(u, [m.data.lat, m.data.lng]);
-            if(d < min) { min = d; near = m; }
-        }
+    navigator.geolocation.getCurrentPosition((pos) => {
+        let u = [pos.coords.latitude, pos.coords.longitude];
+        let min = Infinity, near = null;
+        markers.forEach(m => {
+            if(m.data.cat.toLowerCase() === cat.toLowerCase()) {
+                let d = map.distance(u, [m.data.lat, m.data.lng]);
+                if(d < min) { min = d; near = m; }
+            }
+        });
+        if(near) { map.setView([near.data.lat, near.data.lng], 19); near.marker.openPopup(); }
     });
-    if(near) { map.setView([near.data.lat, near.data.lng], 19); near.marker.openPopup(); }
 }
