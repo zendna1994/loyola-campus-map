@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Loyola ZEN-DNA Navigation</title>
-
   <link rel="icon" type="image/png" href="https://static.wixstatic.com/media/e98a4d_b935ab57540b41bdb320efa88b5e69b1~mv2.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -14,33 +13,37 @@
 
   <div id="header">
     LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
-    <div class="sub">Campus DNA Navigation</div>
+    <div class="sub">Campus Digital Map</div>
   </div>
 
-  <div id="search-container">
-    <input id="search" autocomplete="off" placeholder="Search Dept, Room, or Unit..." oninput="showSuggestions()">
+  <div id="search-wrapper">
+    <div id="search-container">
+      <input id="search" autocomplete="off" placeholder="Search Dept, Room, or Unit..." oninput="showSuggestions()">
+      <div id="help-inline" onclick="openHelpWizard()">❓Help </div>
+    </div>
     <div id="suggestions-box"></div>
   </div>
 
   <div id="route-panel">
     <div id="route-stats">Calculating...</div>
-    <button onclick="clearNavigation()" style="background:#6C232E; color:white; border:none; padding:5px 10px; border-radius:5px; margin-top:5px; width:100%;">Stop Navigation</button>
+    <button onclick="clearNavigation()" class="cancel-btn">Stop Navigation</button>
   </div>
 
   <div id="map"></div>
 
-  <div id="help-btn" onclick="openHelpWizard()">❓ Help</div>
   <div id="fab" onclick="toggleMenu()">☰</div>
 
   <div id="menu">
     <div class="menu-title">Campus Tools</div>
-    <button onclick="locateUser()">📍 Start Live Tracking</button>
+    <button onclick="startLiveTracking()" class="menu-btn">📍 Locate Me</button>
     <div style="display:flex; gap:5px;">
       <button onclick="nearest('toilet')" style="flex:1;">🚻 Toilet</button>
       <button onclick="nearest('water')" style="flex:1;">💧 Water</button>
     </div>
-    <button onclick="nearest('gate')" style="background:#444;">🚪 Nearest Exit</button>
-    <button id="audioBtn" onclick="toggleAudio()" style="background:#D4A64A; color:#23365D; font-weight:700;">🔊 Audio</button>
+    <button onclick="nearest('gate')" style="background:#444;">🚪 Gate</button>
+    <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio OFF</button>
+    
+    <div class="filter-label">Filter Building</div>
     <select id="buildingFilter"></select>
   </div>
 
