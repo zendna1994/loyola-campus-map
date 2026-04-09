@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Loyola ZEN-DNA Navigation</title>
+  <title>Loyola Campus Map</title>
   <link rel="icon" type="image/png" href="https://static.wixstatic.com/media/e98a4d_b935ab57540b41bdb320efa88b5e69b1~mv2.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -19,14 +19,17 @@
   <div id="search-wrapper">
     <div id="search-container">
       <input id="search" autocomplete="off" placeholder="Search Dept, Room, or Unit..." oninput="showSuggestions()">
-      <div id="help-inline" onclick="openHelpWizard()">❓</div>
+      <div id="help-inline" onclick="openHelpWizard()">
+        <span class="help-icon">💡</span>
+        <span class="help-text">HELP</span>
+      </div>
     </div>
     <div id="suggestions-box"></div>
   </div>
 
   <div id="route-panel">
     <div id="route-stats">Calculating...</div>
-    <button onclick="clearNavigation()" class="cancel-btn">Stop Navigation</button>
+    <button onclick="clearNavigation()" class="cancel-btn">STOP NAVIGATION</button>
   </div>
 
   <div id="map"></div>
@@ -34,17 +37,21 @@
   <div id="fab" onclick="toggleMenu()">☰</div>
 
   <div id="menu">
-    <div class="menu-title">Campus Tools</div>
-    <button onclick="startLiveTracking()" class="menu-btn">📍 Locate Me</button>
-    <div style="display:flex; gap:5px;">
+    <div class="menu-title">Campus Explorer</div>
+    
+    <div class="filter-label">Advanced Filters</div>
+    <select id="advFilter" class="zen-select">
+      <option value="all">All Categories</option>
+      <optgroup label="Academic Schools" id="filter-schools"></optgroup>
+      <optgroup label="Facilities" id="filter-cats"></optgroup>
+    </select>
+
+    <div style="display:flex; gap:5px; margin-top:10px;">
       <button onclick="nearest('toilet')" style="flex:1;">🚻 Toilet</button>
       <button onclick="nearest('water')" style="flex:1;">💧 Water</button>
     </div>
-    <button onclick="nearest('gate')" style="background:#444;">🚪 Gate</button>
-    <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio OFF</button>
     
-    <div class="filter-label">Filter Building</div>
-    <select id="buildingFilter"></select>
+    <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio ON</button>
   </div>
 
   <audio id="audio" loop src="assets/audio/loyola-anthem.mp3"></audio>
