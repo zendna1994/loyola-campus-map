@@ -35,6 +35,7 @@ body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; backgrou
   border-left: 1px solid #eee;
   font-size: 13px;
   transition: opacity 0.3s;
+  border-radius: 8px;
 }
 .zen-red-btn:hover { opacity: 0.8; }
 
