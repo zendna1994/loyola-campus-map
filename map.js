@@ -12,6 +12,7 @@ Promise.all([
     fetch(SHEET5).then(r=>r.text()), fetch(SHEET6).then(r=>r.text())
 ])
 .then(data => {
+    // Process Markers (Sheets 1-4)
     data.slice(0,4).forEach((csv, idx) => {
         csv.split("\n").slice(1).forEach(row => {
             let c = row.split(",").map(v => v.trim());
@@ -20,42 +21,41 @@ Promise.all([
             all.push(obj); createMarker(obj);
         });
     });
-    // Zones (Sheet 5)
+    // Zones (Sheet 5) - Click for Popup
     data[4].split("\n").slice(1).forEach(row => {
         let c = row.split(",").map(v => v.trim());
         if(c.length < 9) return;
-        L.polygon([[c[1],c[2]],[c[3],c[4]],[c[5],c[6]],[c[7],c[8]]], {color: c[9] || '#6C232E', fillOpacity: 0.15}).addTo(map)
-         .bindTooltip(c[0], {permanent: true, direction: 'center', className: 'zone-label'});
+        let poly = L.polygon([[c[1],c[2]],[c[3],c[4]],[c[5],c[6]],[c[7],c[8]]], {color: c[9] || '#6C232E', fillOpacity: 0.15}).addTo(map);
+        poly.bindPopup(`<b>Zone: ${c[0]}</b><br>${c[10] || "Campus Landmark"}`);
     });
-    // Room Intelligence (Sheet 6)
+    // Indoor Data (Sheet 6)
     data[5].split("\n").slice(1).forEach(row => {
         let c = row.split(",").map(v => v.trim());
         if(!c[0]) return;
-        rooms.push({ bldg: c[0], img: c[1], wing: c[2], floor: c[3], room: c[4], lat: parseFloat(c[5]), lng: parseFloat(c[6]), type: c[7], desc: c[8] });
+        rooms.push({ bldg: c[0], img: c[1], wing: c[2], floor: c[3], room: c[4], lat: parseFloat(c[5]), lng: parseFloat(c[6]), type: c[7] });
     });
     populateAdvancedFilters();
 });
 
 function createMarker(obj) {
-    let icon = L.icon({ iconUrl: `assets/icons/${obj.cat.toLowerCase()}.png`, iconSize:[40,40], iconAnchor:[20,40], popupAnchor:[0,-40] });
+    let icon = L.icon({ iconUrl: `assets/icons/${obj.cat.toLowerCase()}.png`, iconSize:[38,38], iconAnchor:[19,38], popupAnchor:[0,-38] });
     let m = L.marker([obj.lat, obj.lng], {icon}).addTo(map);
     
-    // Dynamic Popup Content
-    let content = `<div class="popup-container"><img src="assets/images/loyola_centenary.png" class="watermark-img">`;
-    if(obj.school) content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
-    content += `<div class="popup-title">${obj.name || obj.bldg}</div>`;
-    
-    if(obj.cat.toLowerCase() === 'building') {
-        content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.bldg || obj.name}')" class="menu-btn">Navigate</button>`;
-        content += `<button onclick="openBuildingPanel('${obj.name || obj.bldg}')" class="menu-btn gold-btn">View Rooms</button>`;
-    } else {
-        if(obj.bldg && obj.bldg !== "") content += `<div class="popup-sub"><b>Bldg:</b> ${obj.bldg}</div>`;
-        if(obj.room && obj.room !== "") content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
-        content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn">Navigate</button>`;
-    }
-    m.bindPopup(content + `</div>`);
-    
-    m.on('click', () => { m.openPopup(); });
+    m.on('click', () => {
+        let content = `<div class="popup-container"><img src="assets/images/loyola_centenary.png" class="watermark-img">`;
+        if(obj.school) content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
+        content += `<div class="popup-title">${obj.name || obj.bldg}</div>`;
+        
+        if(obj.cat.toLowerCase() === 'building') {
+            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.bldg || obj.name}')" class="menu-btn">Navigate</button>`;
+            content += `<button onclick="openBuildingPanel('${obj.name || obj.bldg}')" class="menu-btn gold-btn">View Rooms</button>`;
+        } else {
+            if(obj.bldg) content += `<div class="popup-sub"><b>Bldg:</b> ${obj.bldg}</div>`;
+            if(obj.room) content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
+            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn">Navigate</button>`;
+        }
+        m.bindPopup(content + `</div>`).openPopup();
+    });
     markers.push({data: obj, marker: m});
 }
 
@@ -64,13 +64,9 @@ function startLiveTracking() {
     navigator.geolocation.watchPosition(pos => {
         let latlng = [pos.coords.latitude, pos.coords.longitude];
         if(!userMarker) {
-            userMarker = L.marker(latlng, {
-                icon: L.icon({iconUrl:'assets/icons/user.png', iconSize:[45,45]})
-            }).addTo(map).bindPopup("<b>You are here</b>");
+            userMarker = L.marker(latlng, {icon: L.icon({iconUrl:'assets/icons/user.png', iconSize:[42,42]})}).addTo(map).bindPopup("<b>You are here</b>");
             map.setView(latlng, 18);
-        } else { 
-            userMarker.setLatLng(latlng); 
-        }
+        } else { userMarker.setLatLng(latlng); }
         if(currentRouteLine) updateNavigationStats();
     }, err => console.log(err), {enableHighAccuracy: true});
 }
@@ -89,13 +85,13 @@ function updateNavigationStats(targetName = "") {
     let end = currentRouteLine.getLatLngs()[1];
     let dist = map.distance(start, end);
     let time = Math.round(dist / 80);
-    document.getElementById("route-stats").innerHTML = `<b>To:</b> ${targetName || 'Destination'}<br>🚶 ${Math.round(dist)}m (${time < 1 ? '<1' : time} min)`;
+    document.getElementById("route-stats").innerHTML = `<b>To:</b> ${targetName || 'Point'}<br>🚶 ${Math.round(dist)}m (${time < 1 ? '<1' : time} min)`;
 }
 
 function openBuildingPanel(bName) {
     activeBldg = bName;
     let bldgRooms = rooms.filter(r => r.bldg === bName);
-    if(bldgRooms.length === 0) return alert("No indoor data for this building yet.");
+    if(bldgRooms.length === 0) return alert("Indoor data not available for " + bName);
     
     let wingSet = [...new Set(bldgRooms.map(r => r.wing))].filter(w => w);
     activeWing = wingSet[0] || "Main";
@@ -109,6 +105,15 @@ function openBuildingPanel(bName) {
     renderFloors();
 }
 
+function switchWing(wing) {
+    activeWing = wing;
+    document.querySelectorAll('.wing-btn').forEach(b => {
+        b.classList.remove('active');
+        if(b.innerText === wing) b.classList.add('active');
+    });
+    renderFloors();
+}
+
 function renderFloors() {
     let wingRooms = rooms.filter(r => r.bldg === activeBldg && r.wing === activeWing);
     let floorSet = [...new Set(wingRooms.map(r => r.floor))].sort().reverse();
@@ -118,7 +123,7 @@ function renderFloors() {
             <div class="floor-label">${f}</div>
             <div class="room-scroll">
                 ${wingRooms.filter(r => r.floor === f).map(r => `
-                    <div class="classroom" id="room-${r.room}" onclick="selectRoom(${r.lat}, ${r.lng}, '${r.room}')">
+                    <div class="classroom" onclick="selectRoom(${r.lat}, ${r.lng}, '${r.room}')">
                         ${r.room}<span>${r.type || "ROOM"}</span>
                     </div>
                 `).join('')}
@@ -131,34 +136,8 @@ function selectRoom(lat, lng, rName) {
     closePanel();
     map.setView([lat, lng], 20);
     if(tempRoomMarker) map.removeLayer(tempRoomMarker);
-    tempRoomMarker = L.circleMarker([lat, lng], {radius: 12, color: 'var(--zen-gold)', fillOpacity: 0.6}).addTo(map);
-    L.popup().setLatLng([lat, lng]).setContent(`<div class="popup-container"><b>Room: ${rName}</b><br><button onclick="navigateToPoint(${lat},${lng},'${rName}')" class="menu-btn">Navigate</button></div>`).openOn(map);
-}
-
-function populateAdvancedFilters() {
-    let catSet = new Set(all.map(p => p.cat).filter(c => c));
-    let bldgSet = new Set(all.map(p => p.bldg).filter(b => b));
-    let catSel = document.getElementById("categoryFilter");
-    let bldgSel = document.getElementById("buildingFilter");
-    
-    catSel.innerHTML = '<option value="all">All Categories</option>';
-    catSet.forEach(c => { 
-        let name = c.charAt(0).toUpperCase() + c.slice(1).toLowerCase();
-        catSel.innerHTML += `<option value="${c}">${name}</option>`; 
-    });
-    
-    bldgSel.innerHTML = '<option value="all">All Buildings</option>';
-    bldgSet.forEach(b => { bldgSel.innerHTML += `<option value="${b}">${b}</option>`; });
-    catSel.onchange = bldgSel.onchange = applyFilters;
-}
-
-function applyFilters() {
-    let c = document.getElementById("categoryFilter").value;
-    let b = document.getElementById("buildingFilter").value;
-    markers.forEach(m => {
-        let match = (c === "all" || m.data.cat === c) && (b === "all" || m.data.bldg === b);
-        if (match) map.addLayer(m.marker); else map.removeLayer(m.marker);
-    });
+    tempRoomMarker = L.circleMarker([lat, lng], {radius: 10, color: '#D4A64A', fillOpacity: 0.6}).addTo(map);
+    L.popup().setLatLng([lat, lng]).setContent(`<b>Room: ${rName}</b><br><button onclick="navigateToPoint(${lat},${lng},'${rName}')" class="menu-btn">Navigate</button>`).openOn(map);
 }
 
 function showSuggestions() {
@@ -182,10 +161,6 @@ function toggleAudio() {
     if (audio.paused) { audio.play(); btn.innerHTML = "🔊 Audio ON"; } else { audio.pause(); btn.innerHTML = "🔇 Audio OFF"; }
 }
 
-function toggleMenu() { let m = document.getElementById("menu"); m.style.display = (m.style.display === "flex") ? "none" : "flex"; }
-function closePanel() { document.getElementById('panel-overlay').style.display = 'none'; }
-function clearNavigation() { if(currentRouteLine) map.removeLayer(currentRouteLine); document.getElementById("route-panel").style.display = "none"; currentRouteLine = null; }
-
 function nearest(cat) {
     if (!userMarker) return alert("Locate yourself first!");
     let u = userMarker.getLatLng(), min = Infinity, near = null;
@@ -196,4 +171,32 @@ function nearest(cat) {
         }
     });
     if (near) { map.setView([near.data.lat, near.data.lng], 19); near.marker.openPopup(); }
-        }
+}
+
+function populateAdvancedFilters() {
+    let catSet = new Set(all.map(p => p.cat).filter(c => c));
+    let bldgSet = new Set(all.map(p => p.bldg).filter(b => b));
+    let catSel = document.getElementById("categoryFilter");
+    let bldgSel = document.getElementById("buildingFilter");
+    catSel.innerHTML = '<option value="all">All Categories</option>';
+    catSet.forEach(c => { 
+        let name = c.charAt(0).toUpperCase() + c.slice(1).toLowerCase();
+        catSel.innerHTML += `<option value="${c}">${name}</option>`; 
+    });
+    bldgSel.innerHTML = '<option value="all">All Buildings</option>';
+    bldgSet.forEach(b => { bldgSel.innerHTML += `<option value="${b}">${b}</option>`; });
+    catSel.onchange = bldgSel.onchange = applyFilters;
+}
+
+function applyFilters() {
+    let c = document.getElementById("categoryFilter").value;
+    let b = document.getElementById("buildingFilter").value;
+    markers.forEach(m => {
+        let match = (c === "all" || m.data.cat === c) && (b === "all" || m.data.bldg === b);
+        if (match) map.addLayer(m.marker); else map.removeLayer(m.marker);
+    });
+}
+
+function toggleMenu() { let m = document.getElementById("menu"); m.style.display = (m.style.display === "flex") ? "none" : "flex"; }
+function closePanel() { document.getElementById('panel-overlay').style.display = 'none'; }
+function clearNavigation() { if(currentRouteLine) map.removeLayer(currentRouteLine); document.getElementById("route-panel").style.display = "none"; currentRouteLine = null; }
