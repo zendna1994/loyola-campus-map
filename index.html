@@ -20,8 +20,7 @@
     <div id="search-container">
       <input id="search" autocomplete="off" placeholder="Search Dept, Room, or Unit..." oninput="showSuggestions()">
       <div id="help-inline" onclick="openHelpWizard()">
-        <span class="help-icon">💡</span>
-        <span class="help-text">HELP</span>
+        <span class="help-text">HELP</span><span class="help-icon">❓</span>
       </div>
     </div>
     <div id="suggestions-box"></div>
@@ -29,7 +28,7 @@
 
   <div id="route-panel">
     <div id="route-stats">Calculating...</div>
-    <button onclick="clearNavigation()" class="cancel-btn">STOP NAVIGATION</button>
+    <button onclick="clearNavigation()" class="cancel-btn">Stop Navigation</button>
   </div>
 
   <div id="map"></div>
@@ -37,24 +36,37 @@
   <div id="fab" onclick="toggleMenu()">☰</div>
 
   <div id="menu">
-    <div class="menu-title">Campus Explorer</div>
+    <div class="menu-title">Campus Control Center</div>
     
-    <div class="filter-label">Advanced Filters</div>
-    <select id="advFilter" class="zen-select">
-      <option value="all">All Categories</option>
-      <optgroup label="Academic Schools" id="filter-schools"></optgroup>
-      <optgroup label="Facilities" id="filter-cats"></optgroup>
-    </select>
-
-    <div style="display:flex; gap:5px; margin-top:10px;">
-      <button onclick="nearest('toilet')" style="flex:1;">🚻 Toilet</button>
-      <button onclick="nearest('water')" style="flex:1;">💧 Water</button>
+    <button onclick="startLiveTracking()" class="menu-btn zen-red">📍 Locate & Track Me</button>
+    
+    <div class="filter-section">
+      <div class="filter-label">Advanced Category Filter</div>
+      <select id="catFilter" class="zen-select">
+        <option value="all">Show All Categories</option>
+        <option value="department">Academic Departments</option>
+        <option value="lab">Research Labs</option>
+        <option value="toilet">Restrooms</option>
+        <option value="water">Water Points</option>
+        <option value="parking">Parking Areas</option>
+        <option value="shop">Shops & Xerox</option>
+      </select>
     </div>
-    
+
+    <div class="filter-section">
+      <div class="filter-label">Building Finder</div>
+      <select id="buildingFilter" class="zen-select"></select>
+    </div>
+
+    <div style="display:flex; gap:5px; margin-top: 10px;">
+      <button onclick="nearest('toilet')" class="util-btn">🚻 Toilet</button>
+      <button onclick="nearest('water')" class="util-btn">💧 Water</button>
+    </div>
+
     <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio ON</button>
   </div>
 
-  <audio id="audio" loop src="assets/audio/loyola-anthem.mp3"></audio>
+  <audio id="audio" loop autoplay muted src="assets/audio/loyola-anthem.mp3"></audio>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="data/config.js"></script>
