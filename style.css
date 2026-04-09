@@ -2,12 +2,10 @@
   --zen-blue: #23365D;
   --zen-maroon: #6C232E;
   --zen-gold: #D4A64A;
-  --zen-light: #f5f7fb;
 }
 
-body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
+body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; background: #f0f0f0; }
 
-/* HEADER */
 #header {
   position: fixed; top: 0; left: 0; right: 0;
   background: var(--zen-blue); color: white;
@@ -18,20 +16,24 @@ body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
 }
 .sub { color: var(--zen-gold); font-size: 10px; letter-spacing: 1px; }
 
-/* SEARCH & SUGGESTIONS */
-#search-container {
-  position: fixed; top: 75px; left: 15px; right: 15px; z-index: 2100;
+/* SEARCH WRAPPER WITH INLINE HELP */
+#search-wrapper { position: fixed; top: 75px; left: 15px; right: 15px; z-index: 2100; }
+#search-container { 
+  display: flex; background: white; border-radius: 10px; 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); overflow: hidden; align-items: center;
 }
-#search {
-  width: 100%; padding: 12px; border-radius: 10px; border: none;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2); outline: none; box-sizing: border-box;
+#search { 
+  flex: 1; border: none; padding: 12px; outline: none; font-family: 'Poppins';
+}
+#help-inline { 
+  padding: 0 15px; cursor: pointer; border-left: 1px solid #eee; font-size: 18px; 
 }
 #suggestions-box {
   background: white; border-radius: 0 0 10px 10px; display: none;
   max-height: 200px; overflow-y: auto; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 .suggestion-item {
-  padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;
+  padding: 12px; border-bottom: 1px solid #eee; cursor: pointer;
   display: flex; justify-content: space-between; font-size: 12px;
 }
 
@@ -42,20 +44,16 @@ body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
   z-index: 1500; display: none; border-left: 5px solid var(--zen-maroon);
   box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-size: 12px;
 }
+.cancel-btn { background:#6C232E; color:white; border:none; padding:8px; border-radius:5px; margin-top:5px; width:100%; cursor: pointer; }
 
-/* HELP & UI */
-#help-btn {
-  position: fixed; top: 20px; right: 15px; background: var(--zen-maroon);
-  color: white; padding: 5px 12px; border-radius: 20px; z-index: 3000; font-size: 12px; cursor: pointer;
-}
 #map { height: 100vh; width: 100%; z-index: 1; }
-.leaflet-top.leaflet-left { margin-top: 130px !important; }
+.leaflet-top.leaflet-left { margin-top: 140px !important; }
 
 #fab {
   position: fixed; bottom: 25px; right: 20px; background: var(--zen-blue);
   color: white; width: 55px; height: 55px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; font-size: 22px;
-  z-index: 2000; border: 2px solid var(--zen-gold);
+  z-index: 2000; border: 2px solid var(--zen-gold); cursor: pointer;
 }
 
 #menu {
@@ -63,12 +61,17 @@ body { margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
   flex-direction: column; background: white; padding: 15px;
   border-radius: 16px; width: 220px; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
-#menu button, #menu select { margin: 5px 0; padding: 10px; border-radius: 8px; border: none; background: var(--zen-blue); color: white; cursor: pointer; }
+.menu-title { font-weight: 700; color: var(--zen-blue); margin-bottom: 10px; border-bottom: 1px solid #eee; }
+.filter-label { font-size: 11px; margin-top: 10px; color: #666; }
+#menu button, #menu select { margin: 5px 0; padding: 10px; border-radius: 8px; border: none; background: var(--zen-blue); color: white; cursor: pointer; font-family: 'Poppins'; }
+.gold-btn { background: var(--zen-gold) !important; color: var(--zen-blue) !important; }
 
-/* POPUP WATERMARK */
-.popup-container { position: relative; min-width: 180px; }
+/* POPUP CLEANUP */
+.popup-container { position: relative; min-width: 180px; text-align: left; }
 .watermark-img {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-  width: 100%; opacity: 0.1; z-index: 0; pointer-events: none;
+  width: 100%; opacity: 0.12; z-index: 0; pointer-events: none; 
+  box-shadow: none !important; border: none !important; /* Removes shadow from watermark */
 }
-.popup-title { font-weight: 700; color: var(--zen-blue); border-bottom: 2px solid var(--zen-gold); position: relative; z-index: 1; }
+.popup-title { font-weight: 700; color: var(--zen-blue); border-bottom: 2px solid var(--zen-gold); position: relative; z-index: 1; margin-bottom: 4px; }
+.popup-sub { position:relative; z-index:1; font-size: 11px; color: #444; }
