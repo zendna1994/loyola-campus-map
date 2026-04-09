@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Loyola Campus Map</title>
+  <title>Loyola ZEN-DNA Navigation</title>
   <link rel="icon" type="image/png" href="https://static.wixstatic.com/media/e98a4d_b935ab57540b41bdb320efa88b5e69b1~mv2.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -13,15 +13,13 @@
 
   <div id="header">
     LOYOLA COLLEGE (AUTONOMOUS), CHENNAI - 600034
-    <div class="sub">Campus Digital Map</div>
+    <div class="sub">Campus DNA Navigation</div>
   </div>
 
   <div id="search-wrapper">
     <div id="search-container">
       <input id="search" autocomplete="off" placeholder="Search Dept, Room, or Unit..." oninput="showSuggestions()">
-      <div id="help-inline" onclick="openHelpWizard()">
-        <span class="help-text">HELP</span><span class="help-icon">❓</span>
-      </div>
+      <div id="help-inline" class="zen-red-btn" onclick="openHelpWizard()">🆘 HELP</div>
     </div>
     <div id="suggestions-box"></div>
   </div>
@@ -36,37 +34,21 @@
   <div id="fab" onclick="toggleMenu()">☰</div>
 
   <div id="menu">
-    <div class="menu-title">Campus Control Center</div>
+    <div class="menu-title">Campus Tools</div>
+    <button onclick="startLiveTracking()" class="menu-btn zen-red-btn">📍 Start Live Tracking</button>
+    <div style="display:flex; gap:5px;">
+      <button onclick="nearest('toilet')" style="flex:1;">🚻 Toilet</button>
+      <button onclick="nearest('water')" style="flex:1;">💧 Water</button>
+    </div>
+    <button onclick="nearest('gate')" style="background:#444;">🚪 Nearest Exit</button>
+    <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio OFF</button>
     
-    <button onclick="startLiveTracking()" class="menu-btn zen-red">📍 Locate & Track Me</button>
-    
-    <div class="filter-section">
-      <div class="filter-label">Advanced Category Filter</div>
-      <select id="catFilter" class="zen-select">
-        <option value="all">Show All Categories</option>
-        <option value="department">Academic Departments</option>
-        <option value="lab">Research Labs</option>
-        <option value="toilet">Restrooms</option>
-        <option value="water">Water Points</option>
-        <option value="parking">Parking Areas</option>
-        <option value="shop">Shops & Xerox</option>
-      </select>
-    </div>
-
-    <div class="filter-section">
-      <div class="filter-label">Building Finder</div>
-      <select id="buildingFilter" class="zen-select"></select>
-    </div>
-
-    <div style="display:flex; gap:5px; margin-top: 10px;">
-      <button onclick="nearest('toilet')" class="util-btn">🚻 Toilet</button>
-      <button onclick="nearest('water')" class="util-btn">💧 Water</button>
-    </div>
-
-    <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio ON</button>
+    <div class="filter-label">Advanced Location Filter</div>
+    <select id="categoryFilter" class="adv-select"></select>
+    <select id="buildingFilter" class="adv-select"></select>
   </div>
 
-  <audio id="audio" loop autoplay muted src="assets/audio/loyola-anthem.mp3"></audio>
+  <audio id="audio" loop src="assets/audio/loyola-anthem.mp3"></audio>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="data/config.js"></script>
