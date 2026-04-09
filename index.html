@@ -38,10 +38,6 @@
       <div id="bldg-hero" class="building-hero"></div>
       <div class="nav-bar">
         <div id="wing-options" style="display:flex; gap:8px;"></div>
-        <div class="search-toggle" onclick="toggleInnerSearch()">🔍</div>
-      </div>
-      <div id="inner-search-box">
-        <input type="text" id="room-search" placeholder="Find Room in Building..." oninput="searchInBuilding()">
       </div>
       <div class="floor-container" id="floor-stack"></div>
       <div class="panel-footer">ZEN-DNA SMART SYSTEM | LOYOLA CAMPUS</div>
@@ -53,12 +49,14 @@
 
   <div id="menu">
     <div class="menu-title">Campus Tools</div>
-    <button onclick="startLiveTracking()" class="menu-btn zen-red-btn">📍 Start Live Tracking</button>
-    <div class="btn-group">
-      <button onclick="nearest('toilet')" class="menu-btn">🚻 Toilet</button>
-      <button onclick="nearest('water')" class="menu-btn">💧 Water</button>
+    <button onclick="startLiveTracking()" class="menu-btn zen-red-btn" style="margin-bottom:8px;">📍 Start Live Tracking</button>
+    
+    <div class="compact-tools">
+      <button onclick="nearest('toilet')" class="tool-btn">🚻 Toilet</button>
+      <button onclick="nearest('water')" class="tool-btn">💧 Water</button>
+      <button onclick="nearest('gate')" class="tool-btn dark-btn">🚪 Exit</button>
     </div>
-    <button onclick="nearest('gate')" class="menu-btn dark-btn">🚪 Nearest Exit</button>
+
     <button id="audioBtn" onclick="toggleAudio()" class="menu-btn gold-btn">🔊 Audio OFF</button>
     
     <div class="filter-label">Filter Category</div>
