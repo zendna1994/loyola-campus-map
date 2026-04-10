@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZEN-DNA | Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --zen-blue: #23365D;
+            --zen-maroon: #6C232E;
+            --zen-gold: #D4A64A;
+            --bg-light: #f4f7f6;
+        }
+
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-light); display: flex; flex-direction: column; height: 100vh; }
+
+        /* HEADER */
+        header {
+            background-color: var(--zen-blue); color: white; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 4px solid var(--zen-maroon);
+        }
+        header h1 { font-size: 18px; margin: 0; display: flex; align-items: center; gap: 10px; }
+        header span { font-size: 11px; color: var(--zen-gold); font-weight: normal; }
+        
+        .print-btn {
+            background-color: var(--zen-gold); color: var(--zen-blue); border: none;
+            padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer;
+            transition: 0.2s;
+        }
+        .print-btn:hover { opacity: 0.8; }
+
+        /* TABS */
+        .tabs { display: flex; background: white; border-bottom: 2px solid var(--zen-gold); overflow-x: auto; }
+        .tab {
+            padding: 12px 20px; cursor: pointer; border: none; background: transparent;
+            font-size: 13px; font-weight: 600; color: var(--zen-blue); white-space: nowrap;
+        }
+        .tab.active { background: var(--zen-maroon); color: white; }
+
+        /* CONTROLS (FILTERS) */
+        .controls {
+            padding: 15px 20px; background: white; display: flex; gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); align-items: center; flex-wrap: wrap;
+        }
+        .controls input, .controls select {
+            padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; outline: none;
+            min-width: 200px;
+        }
+        .controls input:focus, .controls select:focus { border-color: var(--zen-maroon); }
+
+        /* TABLE AREA */
+        .table-container { flex: 1; overflow: auto; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 12px; }
+        th { 
+            background-color: var(--zen-blue); color: white; font-weight: 600; 
+            position: sticky; top: 0; z-index: 10; white-space: nowrap;
+        }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        tr:hover { background-color: #f1f1f1; }
+        
+        #loading { text-align: center; padding: 50px; font-weight: bold; color: var(--zen-maroon); }
+
+        /* PRINT STYLES */
+        @media print {
+            body { display: block; height: auto; background: white; }
+            header .print-btn, .tabs, .controls { display: none; }
+            .table-container { padding: 0; overflow: visible; box-shadow: none; }
+            table { box-shadow: none; border: 1px solid #ccc; }
+            th { position: static; color: black; background-color: #eee; border: 1px solid #ccc; }
+            td { border: 1px solid #ccc; }
+            @page { size: landscape; margin: 1cm; }
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .controls { flex-direction: column; align-items: stretch; }
+            header { flex-direction: column; gap: 10px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ZEN-DNA <span>ADMINISTRATIVE DASHBOARD</span></h1>
+        <button class="print-btn" onclick="window.print()">🖨️ Print Report</button>
+    </header>
+
+    <div class="tabs" id="tab-container"></div>
+
+    <div class="controls">
+        <input type="text" id="globalSearch" placeholder="🔍 Search current sheet..." oninput="applyFilters()">
+        <select id="columnFilter" onchange="applyFilters()">
+            <option value="all">Filter by Primary Column: All</option>
+        </select>
+        <span id="record-count" style="font-size: 12px; color: #666; margin-left: auto; font-weight: bold;"></span>
+    </div>
+
+    <div class="table-container">
+        <div id="loading">Loading Database... Please wait.</div>
+        <table id="data-table" style="display:none;">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const sheetUrls = [
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3foZlfEb4pQVdLKceGYFm6CwIihs1swXAniKzq1efqlO6XqDToAtQTbhEqp0UuGepameKCtdBt-H/pub?gid=0&single=true&output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3foZlfEb4pQVdLKceGYFm6CwIihs1swXAniKzq1efqlO6XqDToAtQTbhEqp0UuGepameKCtdBt-H/pub?gid=1264507605&single=true&output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3foZlfEb4pQVdLKceGYFm6CwIihs1swXAniKzq1efqlO6XqDToAtQTbhEqp0UuGepameKCtdBt-H/pub?gid=1995610518&single=true&output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3foZlfEb4pQVdLKceGYFm6CwIihs1swXAniKzq1efqlO6XqDToAtQTbhEqp0UuGepameKCtdBt-H/pub?gid=2009515906&single=true&output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3foZlfEb4pQVdLKceGYFm6CwIihs1swXAniKzq1efqlO6XqDToAtQTbhEqp0UuGepameKCtdBt-H/pub?gid=257021507&single=true&output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3foZlfEb4pQVdLKceGYFm6CwIihs1swXAniKzq1efqlO6XqDToAtQTbhEqp0UuGepameKCtdBt-H/pub?gid=1404389923&single=true&output=csv"
+        ];
+
+        const tabNames = [
+            "Academics (S1)", "Facilities A (S2)", "Facilities B (S3)", 
+            "Facilities C (S4)", "Landmarks (S5)", "Room Directory (S6)"
+        ];
+
+        let database = [];
+        let currentActiveIndex = 0;
+
+        // Initialize Fetch
+        Promise.all(sheetUrls.map(url => fetch(url).then(r => r.text())))
+            .then(data => {
+                data.forEach((csv, i) => {
+                    database.push(parseCSV(csv));
+                });
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('data-table').style.display = 'table';
+                buildTabs();
+                renderTable(0);
+            }).catch(err => {
+                document.getElementById('loading').innerText = "Error loading data.";
+                console.error(err);
+            });
+
+        // Simple CSV Parser (Assumes commas inside data are removed)
+        function parseCSV(csvText) {
+            let lines = csvText.trim().split("\n");
+            if(lines.length === 0) return { headers: [], rows: [] };
+            
+            let headers = lines[0].split(",").map(h => h.trim());
+            let rows = [];
+            
+            for(let i = 1; i < lines.length; i++) {
+                let cols = lines[i].split(",");
+                if(cols.length > 1) {
+                    let obj = {};
+                    headers.forEach((h, index) => {
+                        obj[h] = cols[index] ? cols[index].trim() : "";
+                    });
+                    rows.push(obj);
+                }
+            }
+            return { headers, rows };
+        }
+
+        // Build Navigation Tabs
+        function buildTabs() {
+            let container = document.getElementById("tab-container");
+            container.innerHTML = "";
+            tabNames.forEach((name, i) => {
+                let btn = document.createElement("button");
+                btn.className = `tab ${i === 0 ? 'active' : ''}`;
+                btn.innerText = name;
+                btn.onclick = () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('globalSearch').value = "";
+                    renderTable(i);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // Render Table & Filters for Active Tab
+        function renderTable(index) {
+            currentActiveIndex = index;
+            let data = database[index];
+            let thead = document.getElementById("table-head");
+            let tbody = document.getElementById("table-body");
+            
+            // Build Headers
+            thead.innerHTML = `<tr>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+            
+            // Determine best column for the dropdown filter
+            let filterCol = data.headers.includes("Building Name") ? "Building Name" : 
+                            data.headers.includes("Building") ? "Building" : 
+                            data.headers.includes("Category") ? "Category" : data.headers[0];
+            
+            setupDropdownFilter(data.rows, filterCol);
+            
+            // Initial Render
+            applyFilters();
+        }
+
+        // Setup dynamic dropdown
+        function setupDropdownFilter(rows, colName) {
+            let select = document.getElementById("columnFilter");
+            let uniqueValues = [...new Set(rows.map(r => r[colName]).filter(v => v !== ""))].sort();
+            
+            select.innerHTML = `<option value="all" data-col="${colName}">Filter by ${colName}: All</option>`;
+            uniqueValues.forEach(val => {
+                select.innerHTML += `<option value="${val}" data-col="${colName}">${val}</option>`;
+            });
+        }
+
+        // Apply Search & Dropdown Filters
+        function applyFilters() {
+            let data = database[currentActiveIndex];
+            let searchQ = document.getElementById("globalSearch").value.toLowerCase();
+            let dropDown = document.getElementById("columnFilter");
+            let filterVal = dropDown.value;
+            let filterCol = dropDown.options[dropDown.selectedIndex].getAttribute("data-col");
+
+            let filteredRows = data.rows.filter(row => {
+                // Check Dropdown
+                let matchesDropdown = (filterVal === "all" || row[filterCol] === filterVal);
+                
+                // Check Global Search
+                let matchesSearch = Object.values(row).some(val => val.toLowerCase().includes(searchQ));
+                
+                return matchesDropdown && matchesSearch;
+            });
+
+            // Render Rows
+            let tbody = document.getElementById("table-body");
+            tbody.innerHTML = filteredRows.map(row => 
+                `<tr>${data.headers.map(h => `<td>${row[h]}</td>`).join('')}</tr>`
+            ).join('');
+
+            document.getElementById("record-count").innerText = `Showing ${filteredRows.length} records`;
+        }
+    </script>
+</body>
+</html>
