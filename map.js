@@ -14,9 +14,8 @@ function unlockAudio() {
         btn.innerHTML = "🔊 Audio ON";
     }
 }
-// Trigger on first click or touch ANYWHERE
-document.addEventListener('click', unlockAudio, { once: true });
-document.addEventListener('touchstart', unlockAudio, { once: true });
+// Listen to any touch or click on the screen to unlock audio
+document.addEventListener('pointerdown', unlockAudio, { once: true });
 
 // ================= DATA LOADING =================
 Promise.all([
@@ -27,36 +26,43 @@ Promise.all([
     // Process Markers (Sheets 1-4)
     data.slice(0,4).forEach((csv, idx) => {
         csv.split("\n").slice(1).forEach(row => {
-            let c = row.split(",").map(v => v.trim());
+            let c = row.split(",");
             if(!c[6] || isNaN(parseFloat(c[6]))) return;
-            let obj = { cat: c[0], school: (idx===0?c[1]:""), name: c[2], bldg: c[3], floor: c[4], room: c[5], lat: parseFloat(c[6]), lng: parseFloat(c[7]), desc: c[8] };
+            let obj = { cat: c[0].trim(), school: (idx===0?c[1].trim():""), name: c[2].trim(), bldg: c[3].trim(), floor: c[4].trim(), room: c[5].trim(), lat: parseFloat(c[6]), lng: parseFloat(c[7]), desc: c[8] ? c[8].trim() : '' };
             all.push(obj); createMarker(obj);
         });
     });
 
     // Zones (Sheet 5)
     data[4].split("\n").slice(1).forEach(row => {
-        let c = row.split(",").map(v => v.trim());
+        let c = row.split(",");
         if(c.length < 9) return;
-        L.polygon([[c[1],c[2]],[c[3],c[4]],[c[5],c[6]],[c[7],c[8]]], {color: c[9] || '#6C232E', fillOpacity: 0.15}).addTo(map)
-         .bindPopup(`<b>Zone: ${c[0]}</b><br>${c[10] || ""}`);
+        let poly = L.polygon([[c[1],c[2]],[c[3],c[4]],[c[5],c[6]],[c[7],c[8]]], {color: c[9] || '#6C232E', fillOpacity: 0.15}).addTo(map)
+         .bindPopup(`<b>Zone: ${c[0].trim()}</b><br>${c[10] ? c[10].trim() : ""}`);
+        
+        let centerLat = (parseFloat(c[1]) + parseFloat(c[5])) / 2; 
+        let centerLng = (parseFloat(c[2]) + parseFloat(c[6])) / 2;
+        all.push({ cat: 'zone', name: c[0].trim(), bldg: c[0].trim(), lat: centerLat, lng: centerLng });
     });
 
-    // Indoor Intelligence (Sheet 6 parsing exactly to your requested format)
-    // Building(0) | Img(1) | Wing(2) | Floor(3) | Room(4) | Lat(5) | Lng(6) | Type(7) | Desc(8)
+    // Indoor Intelligence (Sheet 6 CSV Data Parser)
     data[5].split("\n").slice(1).forEach(row => {
-        let c = row.split(",").map(v => v.trim());
-        if(c.length < 7 || !c[0]) return; // Skip empty rows
+        let c = row.split(",");
+        if(c.length < 7 || !c[0] || c[0].trim() === "") return;
+        
+        // Handle empty Imagelink fallback
+        let imageUrl = c[1] && c[1].trim() !== "" ? c[1].trim() : 'assets/images/loyola_centenary.jpg';
+        
         rooms.push({ 
-            bldg: c[0], 
-            img: c[1] || '', 
-            wing: c[2] || 'Main', 
-            floor: c[3] || 'G', 
-            room: c[4], 
+            bldg: c[0].trim(), 
+            img: imageUrl, 
+            wing: c[2] ? c[2].trim() : 'Main', 
+            floor: c[3] ? c[3].trim() : 'G', 
+            room: c[4] ? c[4].trim() : '', 
             lat: parseFloat(c[5]), 
             lng: parseFloat(c[6]), 
-            type: c[7] || 'Classroom',
-            desc: c[8] || ''
+            type: c[7] ? c[7].trim() : 'Classroom',
+            desc: c[8] ? c[8].trim() : ''
         });
     });
     populateAdvancedFilters();
@@ -69,15 +75,15 @@ function createMarker(obj) {
     
     m.on('click', () => {
         let content = `<div class="popup-container"><img src="assets/images/loyola_centenary.png" class="watermark-img">`;
-        if(obj.school) content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
+        if(obj.school && obj.school !== "") content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
         content += `<div class="popup-title">${obj.name || obj.bldg}</div>`;
         
         if(obj.cat.toLowerCase() === 'building') {
             content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.bldg || obj.name}')" class="menu-btn zen-red-btn" style="margin-bottom:5px;">Navigate</button>`;
             content += `<button onclick="openBuildingPanel('${obj.bldg || obj.name}')" class="menu-btn gold-btn">View Rooms</button>`;
         } else {
-            if(obj.bldg) content += `<div class="popup-sub"><b>Building:</b> ${obj.bldg}</div>`;
-            if(obj.room) content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
+            if(obj.bldg && obj.bldg !== "") content += `<div class="popup-sub"><b>Building:</b> ${obj.bldg}</div>`;
+            if(obj.room && obj.room !== "") content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
             content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn zen-red-btn" style="margin-top:5px;">Navigate</button>`;
         }
         m.bindPopup(content + `</div>`).openPopup();
@@ -85,11 +91,11 @@ function createMarker(obj) {
     markers.push({data: obj, marker: m});
 }
 
-// ================= BUILDING INTELLIGENCE (YOUR STRUCTURE) =================
+// ================= BUILDING INTELLIGENCE =================
 function openBuildingPanel(bName) {
     activeBldg = bName.trim().toLowerCase();
     
-    let bldgRooms = rooms.filter(r => r.bldg.trim().toLowerCase() === activeBldg);
+    let bldgRooms = rooms.filter(r => r.bldg.toLowerCase() === activeBldg);
     if(bldgRooms.length === 0) return alert("Indoor data not available for: " + bName);
     
     let wingSet = [...new Set(bldgRooms.map(r => r.wing))].filter(w => w);
@@ -98,12 +104,8 @@ function openBuildingPanel(bName) {
     document.getElementById('panel-overlay').style.display = 'flex';
     document.getElementById('bldg-name-title').innerText = bName.toUpperCase();
     
-    // Set Hero Image
-    if(bldgRooms[0].img) {
-        document.getElementById('bldg-hero').style.backgroundImage = `url('${bldgRooms[0].img}')`;
-    } else {
-        document.getElementById('bldg-hero').style.backgroundImage = 'none';
-    }
+    // Set Hero Image (now securely uses fallback if empty)
+    document.getElementById('bldg-hero').style.backgroundImage = `url('${bldgRooms[0].img}')`;
     
     let wContainer = document.getElementById('wing-options');
     wContainer.innerHTML = wingSet.map(w => `<div class="wing-btn ${w===activeWing?'active':''}" onclick="switchWing('${w}')">${w}</div>`).join('');
@@ -121,7 +123,7 @@ function switchWing(wing) {
 }
 
 function renderFloors() {
-    let wingRooms = rooms.filter(r => r.bldg.trim().toLowerCase() === activeBldg && r.wing === activeWing);
+    let wingRooms = rooms.filter(r => r.bldg.toLowerCase() === activeBldg && r.wing === activeWing);
     let floorSet = [...new Set(wingRooms.map(r => r.floor))].sort().reverse();
     let container = document.getElementById('floor-stack');
     
@@ -141,12 +143,11 @@ function renderFloors() {
 
 function selectRoom(lat, lng, rName) {
     closePanel();
-    map.setView([lat, lng], 20); // Snap directly to room
+    map.setView([lat, lng], 20); 
     if(tempRoomMarker) map.removeLayer(tempRoomMarker);
     
     tempRoomMarker = L.circleMarker([lat, lng], {radius: 12, color: '#D4A64A', fillOpacity: 0.8}).addTo(map);
     
-    // Force Popup open
     setTimeout(() => {
         L.popup().setLatLng([lat, lng]).setContent(`
             <div class="popup-container">
@@ -213,8 +214,7 @@ function nearest(cat) {
     
     if (near) { 
         map.setView([near.data.lat, near.data.lng], 19); 
-        // Timeout guarantees popup opens AFTER map stops moving
-        setTimeout(() => { near.marker.openPopup(); }, 300); 
+        setTimeout(() => { near.marker.openPopup(); }, 400); // Forces auto-popup open
     } else {
         alert("No " + cat + " found.");
     }
@@ -225,8 +225,8 @@ function showSuggestions() {
     let box = document.getElementById("suggestions-box");
     if(q.length < 2) { box.style.display = "none"; return; }
     
-    let matches = all.filter(i => (i.name||"").toLowerCase().includes(q) || (i.school||"").toLowerCase().includes(q) || (i.bldg||"").toLowerCase().includes(q)).slice(0,5);
-    box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="handleSearchSelect(${m.lat},${m.lng},'${m.name || m.bldg}')"><span>${m.name || m.bldg}</span><span style="font-size:9px; color:var(--zen-maroon); font-weight:700;">${m.school || m.cat.toUpperCase()}</span></div>`).join('');
+    let matches = all.filter(i => (i.name||"").toLowerCase().includes(q) || (i.school||"").toLowerCase().includes(q) || (i.bldg||"").toLowerCase().includes(q) || (i.room||"").toLowerCase().includes(q)).slice(0,5);
+    box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="handleSearchSelect(${m.lat},${m.lng},'${m.name || m.room || m.bldg}')"><span>${m.name || m.room || m.bldg}</span><span style="font-size:9px; color:var(--zen-maroon); font-weight:700;">${m.school || m.cat.toUpperCase()}</span></div>`).join('');
     box.style.display = matches.length ? "block" : "none";
 }
 
@@ -283,7 +283,7 @@ function toggleInnerSearch() { let b = document.getElementById('inner-search-box
 
 function searchInBuilding() {
     let q = document.getElementById('room-search').value.toUpperCase();
-    let match = rooms.find(r => r.bldg.trim().toLowerCase() === activeBldg && r.room.toUpperCase() === q);
+    let match = rooms.find(r => r.bldg.toLowerCase() === activeBldg && r.room.toUpperCase() === q);
     if(match) {
         if(match.wing !== activeWing) switchWing(match.wing);
         setTimeout(() => {
@@ -292,4 +292,4 @@ function searchInBuilding() {
             if(target) { target.classList.add('highlight'); target.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'}); }
         }, 200);
     }
-                                                                                                      }
+                        }
