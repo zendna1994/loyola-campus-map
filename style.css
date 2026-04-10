@@ -1,14 +1,8 @@
-:root {
-    --zen-blue: #23365D;
-    --zen-maroon: #6C232E;
-    --zen-gold: #D4A64A;
-    --room-bg: #f8f9fa;
-}
-
+:root { --zen-blue: #23365D; --zen-maroon: #6C232E; --zen-gold: #D4A64A; --room-bg: #f8f9fa; }
 * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
 body { margin: 0; overflow: hidden; background: #f0f0f0; }
 
-/* MAP UI ELEMENTS */
+/* HEADER & SEARCH */
 #main-header { position: fixed; top: 0; left: 0; right: 0; background: var(--zen-blue); color: white; display: flex; flex-direction: column; align-items: center; padding: 10px; z-index: 2000; border-bottom: 4px solid var(--zen-maroon); text-align: center; font-size: 12px; font-weight: bold;}
 .sub { color: var(--zen-gold); font-size: 9px; letter-spacing: 1px; }
 
@@ -20,9 +14,11 @@ body { margin: 0; overflow: hidden; background: #f0f0f0; }
 #suggestions-box { position: absolute; top: 46px; left: 0; right: 0; background: white; border-radius: 0 0 10px 10px; display: none; max-height: 250px; overflow-y: auto; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 .suggestion-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
 
-#route-panel { position: fixed; bottom: 20px; left: 20px; background: white; padding: 15px; border-radius: 12px; z-index: 4000; display: none; border-left: 5px solid var(--zen-maroon); box-shadow: 0 5px 20px rgba(0,0,0,0.3); width: 220px; font-size: 12px; }
+/* FLOATING NAVIGATION (BOTTOM LEFT) */
+#route-panel { position: fixed; bottom: 20px; left: 20px; background: white; padding: 12px; border-radius: 12px; z-index: 4000; display: none; border-left: 5px solid var(--zen-maroon); box-shadow: 0 5px 20px rgba(0,0,0,0.3); width: 220px; font-size: 12px; }
 .cancel-btn { background: var(--zen-maroon); color: white; border: none; padding: 8px; border-radius: 6px; margin-top: 8px; width: 100%; font-weight: bold; cursor: pointer; }
 
+/* TOOLS MENU & FAB */
 #menu { position: fixed; bottom: 90px; right: 20px; display: none; flex-direction: column; background: white; padding: 12px; border-radius: 16px; width: 220px; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 .menu-title { font-weight: 700; color: var(--zen-blue); margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #eee; }
 .compact-tools { display: flex; gap: 4px; margin-bottom: 8px; }
@@ -30,14 +26,17 @@ body { margin: 0; overflow: hidden; background: #f0f0f0; }
 .menu-btn { width: 100%; padding: 10px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 12px; }
 .dark-btn { background: #333 !important; }
 .gold-btn { background: var(--zen-gold) !important; color: var(--zen-blue) !important; }
-
 #fab { position: fixed; bottom: 25px; right: 20px; background: var(--zen-blue); color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; z-index: 2000; border: 2px solid var(--zen-gold); cursor: pointer; }
 .adv-select { margin: 4px 0; padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-size: 11px; width: 100%; }
 
-/* MAP LAYERS */
+/* MAP LAYERS & COMPACT POPUPS */
 #map { height: 100vh; width: 100%; z-index: 1; }
 .leaflet-top.leaflet-left { margin-top: 130px !important; }
 .watermark-img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; opacity: 0.1; pointer-events: none; }
+
+.popup-container { position: relative; min-width: 160px; padding: 2px; }
+.popup-title { font-weight: 700; color: var(--zen-blue); border-bottom: 2px solid var(--zen-gold); margin-bottom: 3px; position: relative; z-index: 1; font-size: 13px; padding-bottom: 2px; }
+.popup-sub { position: relative; z-index: 1; font-size: 10px; color: #444; margin-bottom: 2px; line-height: 1.2; }
 
 /* BUILDING PANEL */
 #panel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-end; z-index: 5000; }
