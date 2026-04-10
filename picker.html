@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZEN-DNA | Coordinate Picker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --zen-blue: #23365D; --zen-maroon: #6C232E; --zen-gold: #D4A64A; }
+        body { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; overflow: hidden; }
+        
+        #map { height: 100vh; width: 100%; z-index: 1; }
+        
+        /* Coordinate Panel UI */
+        #coord-panel {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: white; padding: 15px 20px; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 2000;
+            display: none; width: 90%; max-width: 320px;
+            border-top: 4px solid var(--zen-maroon);
+        }
+        
+        .title { font-weight: 700; color: var(--zen-blue); font-size: 14px; margin-bottom: 10px; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+        
+        .coord-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f8f9fa; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px;
+            border: 1px solid #eee;
+        }
+        
+        .coord-label { font-size: 12px; font-weight: 600; color: #555; }
+        .coord-value { font-family: monospace; font-size: 13px; color: var(--zen-blue); font-weight: bold; }
+        
+        .copy-btn {
+            background: var(--zen-blue); color: white; border: none;
+            padding: 5px 10px; border-radius: 5px; font-size: 10px; font-weight: bold;
+            cursor: pointer; transition: 0.2s;
+        }
+        .copy-btn:hover { background: var(--zen-gold); color: var(--zen-blue); }
+        .copy-btn:active { transform: scale(0.95); }
+
+        .copy-both { width: 100%; margin-top: 5px; background: var(--zen-maroon); font-size: 12px; padding: 10px;}
+        
+        /* Toast Notification */
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 10px 20px; border-radius: 30px;
+            font-size: 12px; font-weight: bold; z-index: 3000; display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div id="coord-panel">
+        <div class="title">📍 Location Selected</div>
+        
+        <div class="coord-row">
+            <div>
+                <div class="coord-label">Latitude</div>
+                <div class="coord-value" id="lat-val">0.000000</div>
+            </div>
+            <button class="copy-btn" onclick="copyData('lat')">COPY</button>
+        </div>
+
+        <div class="coord-row">
+            <div>
+                <div class="coord-label">Longitude</div>
+                <div class="coord-value" id="lng-val">0.000000</div>
+            </div>
+            <button class="copy-btn" onclick="copyData('lng')">COPY</button>
+        </div>
+
+        <button class="copy-btn copy-both" onclick="copyData('both')">📋 COPY BOTH (Lat, Lng)</button>
+    </div>
+
+    <div id="toast">Copied to clipboard!</div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize Map at Loyola College Center
+        var map = L.map('map', {zoomControl: false}).setView([13.0636, 80.2336], 18);
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+        
+        // Satellite Layer
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 25, maxNativeZoom: 19
+        }).addTo(map);
+
+        var tempMarker = null;
+        var currentLat = "";
+        var currentLng = "";
+
+        // Map Click Event
+        map.on('click', function(e) {
+            currentLat = e.latlng.lat.toFixed(6);
+            currentLng = e.latlng.lng.toFixed(6);
+
+            // Update UI
+            document.getElementById('lat-val').innerText = currentLat;
+            document.getElementById('lng-val').innerText = currentLng;
+            document.getElementById('coord-panel').style.display = 'block';
+
+            // Place Marker
+            if (tempMarker) { map.removeLayer(tempMarker); }
+            tempMarker = L.circleMarker([currentLat, currentLng], {
+                radius: 8, color: '#D4A64A', fillColor: '#6C232E', fillOpacity: 1, weight: 3
+            }).addTo(map);
+        });
+
+        // Copy Function
+        function copyData(type) {
+            let textToCopy = "";
+            if (type === 'lat') textToCopy = currentLat;
+            if (type === 'lng') textToCopy = currentLng;
+            if (type === 'both') textToCopy = `${currentLat}, ${currentLng}`; // Perfect for Sheet 5 Zones
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast(`Copied: ${textToCopy}`);
+            });
+        }
+
+        // Toast Notification Logic
+        function showToast(msg) {
+            let toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.style.display = "block";
+            setTimeout(() => { toast.style.display = "none"; }, 2000);
+        }
+    </script>
+</body>
+</html>
