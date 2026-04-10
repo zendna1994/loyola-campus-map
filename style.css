@@ -39,8 +39,8 @@ body { margin: 0; overflow: hidden; background: #f0f0f0; }
 .popup-sub { position: relative; z-index: 1; font-size: 10px; color: #444; margin-bottom: 2px; line-height: 1.2; }
 
 /* BUILDING PANEL */
-#panel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-end; z-index: 5000; }
-#building-panel { width: 100%; max-width: 480px; height: 92vh; background: #fff; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,0.3); border-top: 5px solid var(--zen-maroon); }
+#panel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 5000; padding: 20px; }
+#building-panel { width: 100%; max-width: 480px; height: auto; max-height: 85vh; background: #fff; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border-top: 5px solid var(--zen-maroon); }
 .panel-header { padding: 10px 15px; background: var(--zen-blue); color: white; display: flex; justify-content: space-between; align-items: center; }
 .panel-header h2 { margin: 0; font-size: 15px; letter-spacing: 1px; }
 .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
@@ -54,7 +54,7 @@ body { margin: 0; overflow: hidden; background: #f0f0f0; }
 #inner-search-box { display: none; padding: 5px 12px; background: #e9e9e9; }
 #inner-search-box input { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 12px; box-sizing: border-box; }
 
-.floor-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 5px 0; }
+.floor-container { flex: 0 1 auto; display: flex; flex-direction: column; overflow-y: auto; padding: 5px 0; min-height: 80px; }
 .floor-row { display: flex; border-bottom: 2px solid #ddd; margin: 2px 0; background: #fff; align-items: stretch; min-height: 80px; }
 .floor-label { width: 35px; background: var(--zen-blue); color: var(--zen-gold); display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 16px; border-right: 2px solid var(--zen-gold); }
 .room-scroll { flex: 1; display: flex; overflow-x: auto; scroll-behavior: smooth; padding: 8px; gap: 8px; align-items: center; }
