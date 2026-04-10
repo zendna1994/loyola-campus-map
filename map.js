@@ -88,10 +88,10 @@ function createMarker(obj) {
             content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.bldg || obj.name}')" class="menu-btn zen-red-btn" style="margin-bottom:4px; padding:6px;">Navigate</button>`;
             content += `<button onclick="openBuildingPanel('${obj.bldg || obj.name}')" class="menu-btn gold-btn" style="padding:6px;">View Rooms</button>`;
         } else {
-            if(obj.bldg && obj.bldg.trim() !== "") content += `<div class="popup-sub"><b>Bldg:</b> ${obj.bldg}</div>`;
+            if(obj.bldg && obj.bldg.trim() !== "") content += `<div class="popup-sub"><b>Bulding:</b> ${obj.bldg}</div>`;
             if(obj.floor && obj.floor.trim() !== "") content += `<div class="popup-sub"><b>Floor:</b> ${obj.floor}</div>`; // Added Floor visibility
-            if(obj.room && obj.room.trim() !== "") content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
-            if(obj.desc && obj.desc.trim() !== "") content += `<div class="popup-sub"><b>Desc:</b> ${obj.desc}</div>`;
+            if(obj.room && obj.room.trim() !== "") content += `<div class="popup-sub"><b>Room no.:</b> ${obj.room}</div>`;
+            if(obj.desc && obj.desc.trim() !== "") content += `<div class="popup-sub"><b>Desc.:</b> ${obj.desc}</div>`;
             content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn zen-red-btn" style="margin-top:6px; padding:6px;">Navigate</button>`;
         }
         m.bindPopup(content + `</div>`).openPopup();
@@ -104,7 +104,7 @@ function openBuildingPanel(bName) {
     activeBldg = bName.trim().toLowerCase();
     
     let bldgRooms = rooms.filter(r => r.bldg.toLowerCase() === activeBldg);
-    if(bldgRooms.length === 0) return alert("Indoor data not available for: " + bName);
+    if(bldgRooms.length === 0) return alert("Building Structure data is not available for: " + bName);
     
     let wingSet = [...new Set(bldgRooms.map(r => r.wing))].filter(w => w);
     activeWing = wingSet[0] || "Main";
@@ -192,7 +192,7 @@ function startLiveTracking() {
 }
 
 function navigateToPoint(lat, lng, name) {
-    if (!userMarker) return alert("Press 'Start Live Tracking' to begin navigation.");
+    if (!userMarker) return alert("Press 'Locate Me' to begin navigation.");
     navTargetName = name;
     if (currentRouteLine) map.removeLayer(currentRouteLine);
     
@@ -220,7 +220,7 @@ function clearNavigation() {
 
 // ================= TOOLS & AUTO-POPUPS =================
 function nearest(cat, fromHelp = false) {
-    if (!userMarker) return alert("Locate yourself first by clicking 'Start Live Tracking'!");
+    if (!userMarker) return alert("Locate yourself first by clicking 'Locate Me'!");
     let u = userMarker.getLatLng(), min = Infinity, near = null;
     
     markers.forEach(m => {
@@ -233,7 +233,7 @@ function nearest(cat, fromHelp = false) {
     if (near) { 
         // If triggered from SOS Help Wizard, show the alert details before navigating
         if(fromHelp) {
-            let locDesc = near.data.bldg ? near.data.bldg : "Campus Grounds";
+            let locDesc = near.data.bldg ? near.data.bldg : "Open Ground";
             let floorDesc = near.data.floor ? ` (Floor: ${near.data.floor})` : "";
             alert(`Nearest ${cat.toUpperCase()} is at: ${locDesc}${floorDesc}.\n\nClick OK to view on map.`);
         }
@@ -247,12 +247,12 @@ function nearest(cat, fromHelp = false) {
 }
 
 function openHelpWizard() {
-    let choice = prompt("What do you need? \n1. Find Dept/School \n2. Nearest Restroom/Water \n3. Exit Gates");
+    let choice = prompt("Welcome to Loyola College (Autonomous), Chennai - 34\n\nHow can we help you ? \n1. Find Department/Unit \n2. Nearest Restroom/Water \n3. Exit Gate\nEnter respective number for assistance.");
     if (choice == "1") {
-        let dept = prompt("Enter Name:");
+        let dept = prompt("Enter Name of tye desired Department/Unit:");
         if(dept) { document.getElementById("search").value = dept; showSuggestions(); }
     } else if (choice == "2") {
-        let fac = prompt("Type 'toilet' or 'water':");
+        let fac = prompt("Type 'toilet' or 'water' for search:");
         if(fac) nearest(fac.trim().toLowerCase(), true);
     } else if (choice == "3") { 
         nearest('gate', true); 
