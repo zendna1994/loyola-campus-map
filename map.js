@@ -5,7 +5,7 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 var all = [], markers = [], rooms = [], userMarker = null, currentRouteLine = null, navTargetName = "";
 var activeBldg = '', activeWing = '', tempRoomMarker = null;
 
-// 1. DATA LOADING
+// ================= DATA LOADING =================
 Promise.all([
     fetch(SHEET1).then(r=>r.text()), fetch(SHEET2).then(r=>r.text()), 
     fetch(SHEET3).then(r=>r.text()), fetch(SHEET4).then(r=>r.text()), 
@@ -20,13 +20,21 @@ Promise.all([
             all.push(obj); createMarker(obj);
         });
     });
-    // Zones (Sheet 5)
+
+    // Zones (Sheet 5) - Added to 'all' for searchability
     data[4].split("\n").slice(1).forEach(row => {
         let c = row.split(",").map(v => v.trim());
         if(c.length < 9) return;
-        L.polygon([[c[1],c[2]],[c[3],c[4]],[c[5],c[6]],[c[7],c[8]]], {color: c[9] || '#6C232E', fillOpacity: 0.15}).addTo(map)
-         .bindPopup(`<b>Zone: ${c[0]}</b><br>${c[10] || ""}`);
+        let p1 = parseFloat(c[1]), p2 = parseFloat(c[2]), p3 = parseFloat(c[5]), p4 = parseFloat(c[6]);
+        let centerLat = (p1 + p3) / 2; let centerLng = (p2 + p4) / 2; // Calculate center for navigation
+        
+        let poly = L.polygon([[c[1],c[2]],[c[3],c[4]],[c[5],c[6]],[c[7],c[8]]], {color: c[9] || '#6C232E', fillOpacity: 0.15}).addTo(map);
+        let zoneContent = `<b>Zone: ${c[0]}</b><br>${c[10] || ""}<br><button onclick="navigateToPoint(${centerLat},${centerLng},'${c[0]}')" class="menu-btn zen-red-btn" style="color:white; margin-top:5px; font-size:10px; padding:5px;">Navigate</button>`;
+        poly.bindPopup(zoneContent);
+        
+        all.push({ cat: 'zone', name: c[0], bldg: c[0], lat: centerLat, lng: centerLng }); // Push to search array
     });
+
     // Indoor Intelligence (Sheet 6)
     data[5].split("\n").slice(1).forEach(row => {
         let c = row.split(",").map(v => v.trim());
@@ -36,13 +44,14 @@ Promise.all([
     populateAdvancedFilters();
 });
 
+// ================= MARKERS & POPUPS =================
 function createMarker(obj) {
     let icon = L.icon({ iconUrl: `assets/icons/${obj.cat.toLowerCase()}.png`, iconSize:[38,38], iconAnchor:[19,38], popupAnchor:[0,-38] });
     let m = L.marker([obj.lat, obj.lng], {icon}).addTo(map);
     
     m.on('click', () => {
         let content = `<div class="popup-container"><img src="assets/images/loyola_centenary.png" class="watermark-img">`;
-        if(obj.school && obj.school !== "") content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
+        if(obj.school) content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
         content += `<div class="popup-title">${obj.name || obj.bldg}</div>`;
         
         if(obj.cat.toLowerCase() === 'building') {
@@ -51,54 +60,29 @@ function createMarker(obj) {
         } else {
             if(obj.bldg) content += `<div class="popup-sub"><b>Building:</b> ${obj.bldg}</div>`;
             if(obj.room) content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
-            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn zen-red-btn" style="color:white;">Navigate</button>`;
+            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn zen-red-btn" style="color:white; margin-top:5px;">Navigate</button>`;
         }
         m.bindPopup(content + `</div>`).openPopup();
     });
     markers.push({data: obj, marker: m});
 }
 
-function startLiveTracking() {
-    if (!navigator.geolocation) return alert("Geolocation not supported");
-    navigator.geolocation.watchPosition(pos => {
-        let latlng = [pos.coords.latitude, pos.coords.longitude];
-        if(!userMarker) {
-            userMarker = L.marker(latlng, {icon: L.icon({iconUrl:'assets/icons/user.png', iconSize:[42,42]})}).addTo(map).bindPopup("<b>You are here</b>");
-            map.setView(latlng, 18);
-        } else { userMarker.setLatLng(latlng); }
-        if(currentRouteLine) updateNavigationStats();
-    }, err => console.log(err), {enableHighAccuracy: true});
-}
-
-function navigateToPoint(lat, lng, name) {
-    if (!userMarker) return alert("Please Start Live Tracking first!");
-    navTargetName = name;
-    if (currentRouteLine) map.removeLayer(currentRouteLine);
-    currentRouteLine = L.polyline([userMarker.getLatLng(), [lat, lng]], {color: '#6C232E', weight: 5, dashArray: '10, 10'}).addTo(map);
-    map.fitBounds(currentRouteLine.getBounds(), {padding: [100,100]});
-    document.getElementById("route-panel").style.display = "block";
-    updateNavigationStats();
-}
-
-function updateNavigationStats() {
-    let start = userMarker.getLatLng();
-    let end = currentRouteLine.getLatLngs()[1];
-    let dist = map.distance(start, end);
-    let time = Math.round(dist / 80);
-    document.getElementById("route-stats").innerHTML = `<b>To:</b> ${navTargetName}<br>🚶 ${Math.round(dist)}m (${time < 1 ? '<1' : time} min)`;
-}
-
+// ================= BUILDING INTELLIGENCE =================
 function openBuildingPanel(bName) {
-    activeBldg = bName;
-    let bldgRooms = rooms.filter(r => r.bldg.toLowerCase() === bName.toLowerCase());
-    if(bldgRooms.length === 0) return alert("No indoor data for " + bName);
+    activeBldg = bName.trim().toLowerCase(); // Strict sanitization for matching
+    let bldgRooms = rooms.filter(r => r.bldg.trim().toLowerCase() === activeBldg);
+    
+    if(bldgRooms.length === 0) return alert("Building interior map is currently being updated for: " + bName);
     
     let wingSet = [...new Set(bldgRooms.map(r => r.wing))].filter(w => w);
     activeWing = wingSet[0] || "Main";
 
     document.getElementById('panel-overlay').style.display = 'flex';
     document.getElementById('bldg-name-title').innerText = bName.toUpperCase();
-    document.getElementById('bldg-hero').style.backgroundImage = `url('${bldgRooms[0].img || ""}')`;
+    
+    // Set Hero Image if provided
+    let heroImg = bldgRooms[0].img ? `url('${bldgRooms[0].img}')` : "none";
+    document.getElementById('bldg-hero').style.backgroundImage = heroImg;
     
     let wContainer = document.getElementById('wing-options');
     wContainer.innerHTML = wingSet.map(w => `<div class="wing-btn ${w===activeWing?'active':''}" onclick="switchWing('${w}')">${w}</div>`).join('');
@@ -115,9 +99,10 @@ function switchWing(wing) {
 }
 
 function renderFloors() {
-    let wingRooms = rooms.filter(r => r.bldg.toLowerCase() === activeBldg.toLowerCase() && r.wing === activeWing);
+    let wingRooms = rooms.filter(r => r.bldg.trim().toLowerCase() === activeBldg && r.wing === activeWing);
     let floorSet = [...new Set(wingRooms.map(r => r.floor))].sort().reverse();
     let container = document.getElementById('floor-stack');
+    
     container.innerHTML = floorSet.map(f => `
         <div class="floor-row">
             <div class="floor-label">${f}</div>
@@ -136,41 +121,100 @@ function selectRoom(lat, lng, rName) {
     closePanel();
     map.setView([lat, lng], 20);
     if(tempRoomMarker) map.removeLayer(tempRoomMarker);
-    tempRoomMarker = L.circleMarker([lat, lng], {radius: 10, color: '#D4A64A', fillOpacity: 0.6}).addTo(map);
-    L.popup().setLatLng([lat, lng]).setContent(`<b>Room: ${rName}</b><br><button onclick="navigateToPoint(${lat},${lng},'${rName}')" class="menu-btn zen-red-btn" style="color:white; padding:5px; font-size:10px;">Navigate</button>`).openOn(map);
+    tempRoomMarker = L.circleMarker([lat, lng], {radius: 10, color: '#D4A64A', fillOpacity: 0.8}).addTo(map);
+    L.popup().setLatLng([lat, lng]).setContent(`<b>Room: ${rName}</b><br><button onclick="navigateToPoint(${lat},${lng},'${rName}')" class="menu-btn zen-red-btn" style="color:white; padding:5px; font-size:10px; margin-top:5px;">Navigate Here</button>`).openOn(map);
 }
 
+// ================= LIVE TRACKING & NAVIGATION =================
+function startLiveTracking() {
+    if (!navigator.geolocation) return alert("Geolocation not supported by your browser");
+    navigator.geolocation.watchPosition(pos => {
+        let latlng = [pos.coords.latitude, pos.coords.longitude];
+        if(!userMarker) {
+            userMarker = L.marker(latlng, {icon: L.icon({iconUrl:'assets/icons/user.png', iconSize:[42,42]})}).addTo(map).bindPopup("<b>You are here</b>");
+            map.setView(latlng, 18);
+        } else { 
+            userMarker.setLatLng(latlng); 
+        }
+        if(currentRouteLine) updateNavigationStats(); // Constantly update distance when walking
+    }, err => console.log("GPS Error:", err), {enableHighAccuracy: true});
+}
+
+function navigateToPoint(lat, lng, name) {
+    if (!userMarker) return alert("Please press 'Start Live Tracking' to begin navigation.");
+    navTargetName = name;
+    if (currentRouteLine) map.removeLayer(currentRouteLine);
+    
+    currentRouteLine = L.polyline([userMarker.getLatLng(), [lat, lng]], {color: '#6C232E', weight: 5, dashArray: '10, 10'}).addTo(map);
+    map.fitBounds(currentRouteLine.getBounds(), {padding: [100,100]});
+    document.getElementById("route-panel").style.display = "block";
+    updateNavigationStats();
+}
+
+function updateNavigationStats() {
+    if(!userMarker || !currentRouteLine) return;
+    let start = userMarker.getLatLng();
+    let end = currentRouteLine.getLatLngs()[1];
+    let dist = map.distance(start, end);
+    let time = Math.round(dist / 80); // Avg walking speed calculation
+    document.getElementById("route-stats").innerHTML = `<b>To:</b> ${navTargetName}<br>🚶 ${Math.round(dist)}m (${time < 1 ? '<1' : time} min)`;
+}
+
+function clearNavigation() { 
+    if(currentRouteLine) map.removeLayer(currentRouteLine); 
+    document.getElementById("route-panel").style.display = "none"; 
+    currentRouteLine = null; 
+}
+
+// ================= SEARCH & AUTO-POPUPS =================
 function showSuggestions() {
-    let q = document.getElementById("search").value.toLowerCase();
+    let q = document.getElementById("search").value.toLowerCase().trim();
     let box = document.getElementById("suggestions-box");
     if(q.length < 2) { box.style.display = "none"; return; }
-    let matches = all.filter(i => (i.name||"").toLowerCase().includes(q) || (i.school||"").toLowerCase().includes(q) || (i.room||"").toLowerCase().includes(q)).slice(0,5);
-    box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="handleSearchSelect(${m.lat},${m.lng},'${m.name || m.room}')"><span>${m.name || m.room}</span><span style="font-size:9px; color:var(--zen-maroon); font-weight:700;">${m.school || m.cat.toUpperCase()}</span></div>`).join('');
+    
+    let matches = all.filter(i => (i.name||"").toLowerCase().includes(q) || (i.school||"").toLowerCase().includes(q) || (i.bldg||"").toLowerCase().includes(q)).slice(0,5);
+    box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="handleSearchSelect(${m.lat},${m.lng},'${m.name || m.bldg}')"><span>${m.name || m.bldg}</span><span style="font-size:9px; color:var(--zen-maroon); font-weight:700;">${m.school || m.cat.toUpperCase()}</span></div>`).join('');
     box.style.display = matches.length ? "block" : "none";
 }
 
 function handleSearchSelect(lat, lng, name) { 
+    document.getElementById("search").value = name;
     document.getElementById("suggestions-box").style.display = "none"; 
     map.setView([lat, lng], 19); 
     navigateToPoint(lat, lng, name); 
 }
 
-function toggleAudio() {
-    let audio = document.getElementById("audio");
-    let btn = document.getElementById("audioBtn");
-    if (audio.paused) { audio.play(); btn.innerHTML = "🔊 Audio ON"; } else { audio.pause(); btn.innerHTML = "🔇 Audio OFF"; }
-}
-
 function nearest(cat) {
-    if (!userMarker) return alert("Locate yourself first!");
+    if (!userMarker) return alert("Locate yourself first by clicking 'Start Live Tracking'!");
     let u = userMarker.getLatLng(), min = Infinity, near = null;
+    
     markers.forEach(m => {
         if (m.data.cat.toLowerCase() === cat.toLowerCase()) {
             let d = map.distance(u, [m.data.lat, m.data.lng]);
             if (d < min) { min = d; near = m; }
         }
     });
-    if (near) { map.setView([near.data.lat, near.data.lng], 19); near.marker.openPopup(); }
+    
+    if (near) { 
+        map.flyTo([near.data.lat, near.data.lng], 19); 
+        setTimeout(() => { near.marker.openPopup(); }, 400); // Forces popup open after map moves
+    } else {
+        alert("No " + cat + " found in database.");
+    }
+}
+
+// ================= TOOLS & FILTERS =================
+function openHelpWizard() {
+    let choice = prompt("What do you need? \n1. Find Dept/School \n2. Nearest Restroom/Water \n3. Exit Gates");
+    if (choice == "1") {
+        let dept = prompt("Enter Name:");
+        if(dept) { document.getElementById("search").value = dept; showSuggestions(); }
+    } else if (choice == "2") {
+        let fac = prompt("Type 'toilet' or 'water':");
+        if(fac) nearest(fac.trim().toLowerCase());
+    } else if (choice == "3") { 
+        nearest('gate'); 
+    }
 }
 
 function populateAdvancedFilters() {
@@ -197,17 +241,11 @@ function applyFilters() {
     });
 }
 
-function openHelpWizard() {
-    let choice = prompt("What do you need? \n1. Find Dept/School \n2. Nearest Restroom/Water \n3. Exit Gates");
-    if (choice == "1") {
-        let dept = prompt("Enter Name:");
-        if(dept) { document.getElementById("search").value = dept; showSuggestions(); }
-    } else if (choice == "2") {
-        let fac = prompt("Type 'toilet' or 'water':");
-        if(fac) nearest(fac);
-    } else if (choice == "3") { nearest('gate'); }
+function toggleAudio() {
+    let audio = document.getElementById("audio");
+    let btn = document.getElementById("audioBtn");
+    if (audio.paused) { audio.play(); btn.innerHTML = "🔊 Audio ON"; } else { audio.pause(); btn.innerHTML = "🔇 Audio OFF"; }
 }
 
 function toggleMenu() { let m = document.getElementById("menu"); m.style.display = (m.style.display === "flex") ? "none" : "flex"; }
 function closePanel() { document.getElementById('panel-overlay').style.display = 'none'; }
-function clearNavigation() { if(currentRouteLine) map.removeLayer(currentRouteLine); document.getElementById("route-panel").style.display = "none"; currentRouteLine = null; }
