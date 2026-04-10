@@ -10,11 +10,10 @@ function unlockAudio() {
     let audio = document.getElementById("audio");
     let btn = document.getElementById("audioBtn");
     if (audio.paused) {
-        audio.play().catch(e => console.log("Audio waiting for stronger interaction"));
+        audio.play().catch(e => console.log("Audio waiting..."));
         btn.innerHTML = "🔊 Audio ON";
     }
 }
-// Triggers on any touch or click anywhere on the document
 document.addEventListener('pointerdown', unlockAudio, { once: true });
 document.addEventListener('touchstart', unlockAudio, { once: true });
 document.addEventListener('click', unlockAudio, { once: true });
@@ -47,7 +46,7 @@ Promise.all([
         all.push({ cat: 'zone', name: c[0].trim(), bldg: c[0].trim(), lat: centerLat, lng: centerLng });
     });
 
-    // Indoor Intelligence (Sheet 6)
+    // Indoor Intelligence (Sheet 6 CSV Data Parser)
     data[5].split("\n").slice(1).forEach(row => {
         let c = row.split(",");
         if(c.length < 7 || !c[0] || c[0].trim() === "") return;
@@ -69,10 +68,9 @@ Promise.all([
     populateAdvancedFilters();
 });
 
-// ================= MARKERS & COMPACT POPUPS =================
+// ================= MARKERS & POPUPS =================
 function createMarker(obj) {
     let isBldg = obj.cat.toLowerCase() === 'building';
-    // BUILDING MARKERS ARE LARGER
     let size = isBldg ? [56, 56] : [38, 38]; 
     let anchor = isBldg ? [28, 56] : [19, 38];
     let pAnchor = isBldg ? [0, -56] : [0, -38];
@@ -91,6 +89,7 @@ function createMarker(obj) {
             content += `<button onclick="openBuildingPanel('${obj.bldg || obj.name}')" class="menu-btn gold-btn" style="padding:6px;">View Rooms</button>`;
         } else {
             if(obj.bldg && obj.bldg.trim() !== "") content += `<div class="popup-sub"><b>Bldg:</b> ${obj.bldg}</div>`;
+            if(obj.floor && obj.floor.trim() !== "") content += `<div class="popup-sub"><b>Floor:</b> ${obj.floor}</div>`; // Added Floor visibility
             if(obj.room && obj.room.trim() !== "") content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
             if(obj.desc && obj.desc.trim() !== "") content += `<div class="popup-sub"><b>Desc:</b> ${obj.desc}</div>`;
             content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn zen-red-btn" style="margin-top:6px; padding:6px;">Navigate</button>`;
@@ -148,35 +147,33 @@ function renderFloors() {
     `).join('');
 }
 
-// DYNAMIC ROOM MARKER & DETAILED POPUP
 function selectRoom(rName) {
-    // Find exact room data
     let r = rooms.find(room => room.room === rName && room.bldg.toLowerCase() === activeBldg);
     if(!r) return;
 
     closePanel();
-    map.setView([r.lat, r.lng], 21); // Zoom close
+    // Use animate: false to guarantee popup opens successfully
+    map.setView([r.lat, r.lng], 21, { animate: false }); 
     if(tempRoomMarker) map.removeLayer(tempRoomMarker);
     
-    // Use dynamic icon based on Type (e.g., classroom.png, lab.png)
     let typeStr = r.type ? r.type.toLowerCase().trim() : 'classroom';
     let customIcon = L.icon({ iconUrl: `assets/icons/${typeStr}.png`, iconSize:[40,40], iconAnchor:[20,40], popupAnchor:[0,-40] });
     
     tempRoomMarker = L.marker([r.lat, r.lng], {icon: customIcon}).addTo(map);
     
-    // Detailed Compact Popup
     let pContent = `
         <div class="popup-container">
             <img src="assets/images/loyola_centenary.png" class="watermark-img">
             <div class="popup-title">${r.bldg}</div>
             <div class="popup-sub"><b>Room No:</b> ${r.room}</div>
+            <div class="popup-sub"><b>Floor:</b> ${r.floor}</div>
             <div class="popup-sub"><b>Type:</b> ${r.type}</div>
             ${r.desc ? `<div class="popup-sub"><b>Desc:</b> ${r.desc}</div>` : ''}
             <button onclick="navigateToPoint(${r.lat},${r.lng},'${r.room}')" class="menu-btn zen-red-btn" style="margin-top:6px; padding:6px;">Navigate Here</button>
         </div>
     `;
     
-    setTimeout(() => { tempRoomMarker.bindPopup(pContent).openPopup(); }, 300);
+    tempRoomMarker.bindPopup(pContent).openPopup();
 }
 
 // ================= LIVE TRACKING & NAVIGATION =================
@@ -221,8 +218,8 @@ function clearNavigation() {
     currentRouteLine = null; 
 }
 
-// ================= TOOLS, SEARCH, & AUTO-POPUPS =================
-function nearest(cat) {
+// ================= TOOLS & AUTO-POPUPS =================
+function nearest(cat, fromHelp = false) {
     if (!userMarker) return alert("Locate yourself first by clicking 'Start Live Tracking'!");
     let u = userMarker.getLatLng(), min = Infinity, near = null;
     
@@ -234,13 +231,35 @@ function nearest(cat) {
     });
     
     if (near) { 
-        map.flyTo([near.data.lat, near.data.lng], 19, { animate: true, duration: 0.5 }); 
-        setTimeout(() => { near.marker.openPopup(); }, 600); // Guarantees popup opens after map animation
+        // If triggered from SOS Help Wizard, show the alert details before navigating
+        if(fromHelp) {
+            let locDesc = near.data.bldg ? near.data.bldg : "Campus Grounds";
+            let floorDesc = near.data.floor ? ` (Floor: ${near.data.floor})` : "";
+            alert(`Nearest ${cat.toUpperCase()} is at: ${locDesc}${floorDesc}.\n\nClick OK to view on map.`);
+        }
+        
+        // Use animate: false to guarantee the popup opens immediately
+        map.setView([near.data.lat, near.data.lng], 19, { animate: false }); 
+        near.marker.openPopup(); 
     } else {
         alert("No " + cat + " found.");
     }
 }
 
+function openHelpWizard() {
+    let choice = prompt("What do you need? \n1. Find Dept/School \n2. Nearest Restroom/Water \n3. Exit Gates");
+    if (choice == "1") {
+        let dept = prompt("Enter Name:");
+        if(dept) { document.getElementById("search").value = dept; showSuggestions(); }
+    } else if (choice == "2") {
+        let fac = prompt("Type 'toilet' or 'water':");
+        if(fac) nearest(fac.trim().toLowerCase(), true);
+    } else if (choice == "3") { 
+        nearest('gate', true); 
+    }
+}
+
+// ================= UI & SEARCH =================
 function showSuggestions() {
     let q = document.getElementById("search").value.toLowerCase().trim();
     let box = document.getElementById("suggestions-box");
@@ -256,19 +275,6 @@ function handleSearchSelect(lat, lng, name) {
     document.getElementById("suggestions-box").style.display = "none"; 
     map.setView([lat, lng], 19); 
     navigateToPoint(lat, lng, name); 
-}
-
-function openHelpWizard() {
-    let choice = prompt("What do you need? \n1. Find Dept/School \n2. Nearest Restroom/Water \n3. Exit Gates");
-    if (choice == "1") {
-        let dept = prompt("Enter Name:");
-        if(dept) { document.getElementById("search").value = dept; showSuggestions(); }
-    } else if (choice == "2") {
-        let fac = prompt("Type 'toilet' or 'water':");
-        if(fac) nearest(fac.trim().toLowerCase());
-    } else if (choice == "3") { 
-        nearest('gate'); 
-    }
 }
 
 function toggleAudio() {
@@ -313,4 +319,4 @@ function searchInBuilding() {
             if(target) { target.classList.add('highlight'); target.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'}); }
         }, 200);
     }
-}
+                      }
