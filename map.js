@@ -2,7 +2,7 @@ var map = L.map('map', { attributionControl: false, zoomControl: false }).setVie
 L.control.zoom({ position: 'topleft' }).addTo(map);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 25, maxNativeZoom: 19 }).addTo(map);
 
-var all = [], markers = [], rooms = [], userMarker = null, currentRouteLine = null;
+var all = [], markers = [], rooms = [], userMarker = null, currentRouteLine = null, navTargetName = "";
 var activeBldg = '', activeWing = '', tempRoomMarker = null;
 
 // 1. DATA LOADING
@@ -10,25 +10,24 @@ Promise.all([
     fetch(SHEET1).then(r=>r.text()), fetch(SHEET2).then(r=>r.text()), 
     fetch(SHEET3).then(r=>r.text()), fetch(SHEET4).then(r=>r.text()), 
     fetch(SHEET5).then(r=>r.text()), fetch(SHEET6).then(r=>r.text())
-])
-.then(data => {
+]).then(data => {
     // Process Markers (Sheets 1-4)
     data.slice(0,4).forEach((csv, idx) => {
         csv.split("\n").slice(1).forEach(row => {
             let c = row.split(",").map(v => v.trim());
             if(!c[6] || isNaN(parseFloat(c[6]))) return;
-            let obj = { cat: c[0], school: (idx===0?c[1]:""), name: c[2], bldg: c[3], floor: c[4], room: c[5], lat: parseFloat(c[6]), lng: parseFloat(c[7]) };
+            let obj = { cat: c[0], school: (idx===0?c[1]:""), name: c[2], bldg: c[3], floor: c[4], room: c[5], lat: parseFloat(c[6]), lng: parseFloat(c[7]), desc: c[8] };
             all.push(obj); createMarker(obj);
         });
     });
-    // Zones (Sheet 5) - Click for Popup
+    // Zones (Sheet 5)
     data[4].split("\n").slice(1).forEach(row => {
         let c = row.split(",").map(v => v.trim());
         if(c.length < 9) return;
-        let poly = L.polygon([[c[1],c[2]],[c[3],c[4]],[c[5],c[6]],[c[7],c[8]]], {color: c[9] || '#6C232E', fillOpacity: 0.15}).addTo(map);
-        poly.bindPopup(`<b>Zone: ${c[0]}</b><br>${c[10] || "Campus Landmark"}`);
+        L.polygon([[c[1],c[2]],[c[3],c[4]],[c[5],c[6]],[c[7],c[8]]], {color: c[9] || '#6C232E', fillOpacity: 0.15}).addTo(map)
+         .bindPopup(`<b>Zone: ${c[0]}</b><br>${c[10] || ""}`);
     });
-    // Indoor Data (Sheet 6)
+    // Indoor Intelligence (Sheet 6)
     data[5].split("\n").slice(1).forEach(row => {
         let c = row.split(",").map(v => v.trim());
         if(!c[0]) return;
@@ -43,16 +42,16 @@ function createMarker(obj) {
     
     m.on('click', () => {
         let content = `<div class="popup-container"><img src="assets/images/loyola_centenary.png" class="watermark-img">`;
-        if(obj.school) content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
+        if(obj.school && obj.school !== "") content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
         content += `<div class="popup-title">${obj.name || obj.bldg}</div>`;
         
         if(obj.cat.toLowerCase() === 'building') {
-            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.bldg || obj.name}')" class="menu-btn">Navigate</button>`;
-            content += `<button onclick="openBuildingPanel('${obj.name || obj.bldg}')" class="menu-btn gold-btn">View Rooms</button>`;
+            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.bldg || obj.name}')" class="menu-btn zen-red-btn" style="color:white; margin-bottom:5px;">Navigate</button>`;
+            content += `<button onclick="openBuildingPanel('${obj.bldg || obj.name}')" class="menu-btn gold-btn">View Rooms</button>`;
         } else {
-            if(obj.bldg) content += `<div class="popup-sub"><b>Bldg:</b> ${obj.bldg}</div>`;
+            if(obj.bldg) content += `<div class="popup-sub"><b>Building:</b> ${obj.bldg}</div>`;
             if(obj.room) content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
-            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn">Navigate</button>`;
+            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn zen-red-btn" style="color:white;">Navigate</button>`;
         }
         m.bindPopup(content + `</div>`).openPopup();
     });
@@ -73,25 +72,26 @@ function startLiveTracking() {
 
 function navigateToPoint(lat, lng, name) {
     if (!userMarker) return alert("Please Start Live Tracking first!");
+    navTargetName = name;
     if (currentRouteLine) map.removeLayer(currentRouteLine);
     currentRouteLine = L.polyline([userMarker.getLatLng(), [lat, lng]], {color: '#6C232E', weight: 5, dashArray: '10, 10'}).addTo(map);
     map.fitBounds(currentRouteLine.getBounds(), {padding: [100,100]});
     document.getElementById("route-panel").style.display = "block";
-    updateNavigationStats(name);
+    updateNavigationStats();
 }
 
-function updateNavigationStats(targetName = "") {
+function updateNavigationStats() {
     let start = userMarker.getLatLng();
     let end = currentRouteLine.getLatLngs()[1];
     let dist = map.distance(start, end);
     let time = Math.round(dist / 80);
-    document.getElementById("route-stats").innerHTML = `<b>To:</b> ${targetName || 'Point'}<br>🚶 ${Math.round(dist)}m (${time < 1 ? '<1' : time} min)`;
+    document.getElementById("route-stats").innerHTML = `<b>To:</b> ${navTargetName}<br>🚶 ${Math.round(dist)}m (${time < 1 ? '<1' : time} min)`;
 }
 
 function openBuildingPanel(bName) {
     activeBldg = bName;
-    let bldgRooms = rooms.filter(r => r.bldg === bName);
-    if(bldgRooms.length === 0) return alert("Indoor data not available for " + bName);
+    let bldgRooms = rooms.filter(r => r.bldg.toLowerCase() === bName.toLowerCase());
+    if(bldgRooms.length === 0) return alert("No indoor data for " + bName);
     
     let wingSet = [...new Set(bldgRooms.map(r => r.wing))].filter(w => w);
     activeWing = wingSet[0] || "Main";
@@ -115,7 +115,7 @@ function switchWing(wing) {
 }
 
 function renderFloors() {
-    let wingRooms = rooms.filter(r => r.bldg === activeBldg && r.wing === activeWing);
+    let wingRooms = rooms.filter(r => r.bldg.toLowerCase() === activeBldg.toLowerCase() && r.wing === activeWing);
     let floorSet = [...new Set(wingRooms.map(r => r.floor))].sort().reverse();
     let container = document.getElementById('floor-stack');
     container.innerHTML = floorSet.map(f => `
@@ -137,16 +137,16 @@ function selectRoom(lat, lng, rName) {
     map.setView([lat, lng], 20);
     if(tempRoomMarker) map.removeLayer(tempRoomMarker);
     tempRoomMarker = L.circleMarker([lat, lng], {radius: 10, color: '#D4A64A', fillOpacity: 0.6}).addTo(map);
-    L.popup().setLatLng([lat, lng]).setContent(`<b>Room: ${rName}</b><br><button onclick="navigateToPoint(${lat},${lng},'${rName}')" class="menu-btn">Navigate</button>`).openOn(map);
+    L.popup().setLatLng([lat, lng]).setContent(`<b>Room: ${rName}</b><br><button onclick="navigateToPoint(${lat},${lng},'${rName}')" class="menu-btn zen-red-btn" style="color:white; padding:5px; font-size:10px;">Navigate</button>`).openOn(map);
 }
 
 function showSuggestions() {
     let q = document.getElementById("search").value.toLowerCase();
     let box = document.getElementById("suggestions-box");
     if(q.length < 2) { box.style.display = "none"; return; }
-    let matches = all.filter(i => (i.name||"").toLowerCase().includes(q) || (i.school||"").toLowerCase().includes(q)).slice(0,5);
-    box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="handleSearchSelect(${m.lat},${m.lng},'${m.name}')"><span>${m.name}</span><span style="font-size:9px; color:var(--zen-maroon); font-weight:700;">${m.school || m.cat.toUpperCase()}</span></div>`).join('');
-    box.style.display = "block";
+    let matches = all.filter(i => (i.name||"").toLowerCase().includes(q) || (i.school||"").toLowerCase().includes(q) || (i.room||"").toLowerCase().includes(q)).slice(0,5);
+    box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="handleSearchSelect(${m.lat},${m.lng},'${m.name || m.room}')"><span>${m.name || m.room}</span><span style="font-size:9px; color:var(--zen-maroon); font-weight:700;">${m.school || m.cat.toUpperCase()}</span></div>`).join('');
+    box.style.display = matches.length ? "block" : "none";
 }
 
 function handleSearchSelect(lat, lng, name) { 
@@ -195,6 +195,17 @@ function applyFilters() {
         let match = (c === "all" || m.data.cat === c) && (b === "all" || m.data.bldg === b);
         if (match) map.addLayer(m.marker); else map.removeLayer(m.marker);
     });
+}
+
+function openHelpWizard() {
+    let choice = prompt("What do you need? \n1. Find Dept/School \n2. Nearest Restroom/Water \n3. Exit Gates");
+    if (choice == "1") {
+        let dept = prompt("Enter Name:");
+        if(dept) { document.getElementById("search").value = dept; showSuggestions(); }
+    } else if (choice == "2") {
+        let fac = prompt("Type 'toilet' or 'water':");
+        if(fac) nearest(fac);
+    } else if (choice == "3") { nearest('gate'); }
 }
 
 function toggleMenu() { let m = document.getElementById("menu"); m.style.display = (m.style.display === "flex") ? "none" : "flex"; }
