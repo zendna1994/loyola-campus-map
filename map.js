@@ -5,17 +5,19 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 var all = [], markers = [], rooms = [], userMarker = null, currentRouteLine = null, navTargetName = "";
 var activeBldg = '', activeWing = '', tempRoomMarker = null;
 
-// ================= AUDIO AUTOPLAY FIX =================
+// ================= AUDIO AUTOPLAY ON FIRST INTERACTION =================
 function unlockAudio() {
     let audio = document.getElementById("audio");
     let btn = document.getElementById("audioBtn");
     if (audio.paused) {
-        audio.play().catch(e => console.log("Audio waiting..."));
+        audio.play().catch(e => console.log("Audio waiting for stronger interaction"));
         btn.innerHTML = "🔊 Audio ON";
     }
 }
-// Listen to any touch or click on the screen to unlock audio
+// Triggers on any touch or click anywhere on the document
 document.addEventListener('pointerdown', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('click', unlockAudio, { once: true });
 
 // ================= DATA LOADING =================
 Promise.all([
@@ -45,12 +47,11 @@ Promise.all([
         all.push({ cat: 'zone', name: c[0].trim(), bldg: c[0].trim(), lat: centerLat, lng: centerLng });
     });
 
-    // Indoor Intelligence (Sheet 6 CSV Data Parser)
+    // Indoor Intelligence (Sheet 6)
     data[5].split("\n").slice(1).forEach(row => {
         let c = row.split(",");
         if(c.length < 7 || !c[0] || c[0].trim() === "") return;
         
-        // Handle empty Imagelink fallback
         let imageUrl = c[1] && c[1].trim() !== "" ? c[1].trim() : 'assets/images/loyola_centenary.jpg';
         
         rooms.push({ 
@@ -68,23 +69,31 @@ Promise.all([
     populateAdvancedFilters();
 });
 
-// ================= MARKERS & POPUPS =================
+// ================= MARKERS & COMPACT POPUPS =================
 function createMarker(obj) {
-    let icon = L.icon({ iconUrl: `assets/icons/${obj.cat.toLowerCase()}.png`, iconSize:[38,38], iconAnchor:[19,38], popupAnchor:[0,-38] });
+    let isBldg = obj.cat.toLowerCase() === 'building';
+    // BUILDING MARKERS ARE LARGER
+    let size = isBldg ? [56, 56] : [38, 38]; 
+    let anchor = isBldg ? [28, 56] : [19, 38];
+    let pAnchor = isBldg ? [0, -56] : [0, -38];
+    
+    let icon = L.icon({ iconUrl: `assets/icons/${obj.cat.toLowerCase()}.png`, iconSize: size, iconAnchor: anchor, popupAnchor: pAnchor });
     let m = L.marker([obj.lat, obj.lng], {icon}).addTo(map);
     
     m.on('click', () => {
         let content = `<div class="popup-container"><img src="assets/images/loyola_centenary.png" class="watermark-img">`;
-        if(obj.school && obj.school !== "") content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700;">${obj.school}</div>`;
+        
+        if(obj.school && obj.school.trim() !== "") content += `<div style="color:var(--zen-gold); font-size:10px; font-weight:700; margin-bottom:2px;">${obj.school}</div>`;
         content += `<div class="popup-title">${obj.name || obj.bldg}</div>`;
         
-        if(obj.cat.toLowerCase() === 'building') {
-            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.bldg || obj.name}')" class="menu-btn zen-red-btn" style="margin-bottom:5px;">Navigate</button>`;
-            content += `<button onclick="openBuildingPanel('${obj.bldg || obj.name}')" class="menu-btn gold-btn">View Rooms</button>`;
+        if(isBldg) {
+            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.bldg || obj.name}')" class="menu-btn zen-red-btn" style="margin-bottom:4px; padding:6px;">Navigate</button>`;
+            content += `<button onclick="openBuildingPanel('${obj.bldg || obj.name}')" class="menu-btn gold-btn" style="padding:6px;">View Rooms</button>`;
         } else {
-            if(obj.bldg && obj.bldg !== "") content += `<div class="popup-sub"><b>Building:</b> ${obj.bldg}</div>`;
-            if(obj.room && obj.room !== "") content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
-            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn zen-red-btn" style="margin-top:5px;">Navigate</button>`;
+            if(obj.bldg && obj.bldg.trim() !== "") content += `<div class="popup-sub"><b>Bldg:</b> ${obj.bldg}</div>`;
+            if(obj.room && obj.room.trim() !== "") content += `<div class="popup-sub"><b>Room:</b> ${obj.room}</div>`;
+            if(obj.desc && obj.desc.trim() !== "") content += `<div class="popup-sub"><b>Desc:</b> ${obj.desc}</div>`;
+            content += `<button onclick="navigateToPoint(${obj.lat},${obj.lng},'${obj.name}')" class="menu-btn zen-red-btn" style="margin-top:6px; padding:6px;">Navigate</button>`;
         }
         m.bindPopup(content + `</div>`).openPopup();
     });
@@ -103,8 +112,6 @@ function openBuildingPanel(bName) {
 
     document.getElementById('panel-overlay').style.display = 'flex';
     document.getElementById('bldg-name-title').innerText = bName.toUpperCase();
-    
-    // Set Hero Image (now securely uses fallback if empty)
     document.getElementById('bldg-hero').style.backgroundImage = `url('${bldgRooms[0].img}')`;
     
     let wContainer = document.getElementById('wing-options');
@@ -132,7 +139,7 @@ function renderFloors() {
             <div class="floor-label">${f}</div>
             <div class="room-scroll">
                 ${wingRooms.filter(r => r.floor === f).map(r => `
-                    <div class="classroom" onclick="selectRoom(${r.lat}, ${r.lng}, '${r.room}')">
+                    <div class="classroom" onclick="selectRoom('${r.room}')">
                         ${r.room}<span>${r.type.toUpperCase()}</span>
                     </div>
                 `).join('')}
@@ -141,21 +148,35 @@ function renderFloors() {
     `).join('');
 }
 
-function selectRoom(lat, lng, rName) {
+// DYNAMIC ROOM MARKER & DETAILED POPUP
+function selectRoom(rName) {
+    // Find exact room data
+    let r = rooms.find(room => room.room === rName && room.bldg.toLowerCase() === activeBldg);
+    if(!r) return;
+
     closePanel();
-    map.setView([lat, lng], 20); 
+    map.setView([r.lat, r.lng], 21); // Zoom close
     if(tempRoomMarker) map.removeLayer(tempRoomMarker);
     
-    tempRoomMarker = L.circleMarker([lat, lng], {radius: 12, color: '#D4A64A', fillOpacity: 0.8}).addTo(map);
+    // Use dynamic icon based on Type (e.g., classroom.png, lab.png)
+    let typeStr = r.type ? r.type.toLowerCase().trim() : 'classroom';
+    let customIcon = L.icon({ iconUrl: `assets/icons/${typeStr}.png`, iconSize:[40,40], iconAnchor:[20,40], popupAnchor:[0,-40] });
     
-    setTimeout(() => {
-        L.popup().setLatLng([lat, lng]).setContent(`
-            <div class="popup-container">
-                <b>Room: ${rName}</b><br>
-                <button onclick="navigateToPoint(${lat},${lng},'${rName}')" class="menu-btn zen-red-btn" style="margin-top:5px;">Navigate Here</button>
-            </div>
-        `).openOn(map);
-    }, 200);
+    tempRoomMarker = L.marker([r.lat, r.lng], {icon: customIcon}).addTo(map);
+    
+    // Detailed Compact Popup
+    let pContent = `
+        <div class="popup-container">
+            <img src="assets/images/loyola_centenary.png" class="watermark-img">
+            <div class="popup-title">${r.bldg}</div>
+            <div class="popup-sub"><b>Room No:</b> ${r.room}</div>
+            <div class="popup-sub"><b>Type:</b> ${r.type}</div>
+            ${r.desc ? `<div class="popup-sub"><b>Desc:</b> ${r.desc}</div>` : ''}
+            <button onclick="navigateToPoint(${r.lat},${r.lng},'${r.room}')" class="menu-btn zen-red-btn" style="margin-top:6px; padding:6px;">Navigate Here</button>
+        </div>
+    `;
+    
+    setTimeout(() => { tempRoomMarker.bindPopup(pContent).openPopup(); }, 300);
 }
 
 // ================= LIVE TRACKING & NAVIGATION =================
@@ -164,7 +185,7 @@ function startLiveTracking() {
     navigator.geolocation.watchPosition(pos => {
         let latlng = [pos.coords.latitude, pos.coords.longitude];
         if(!userMarker) {
-            userMarker = L.marker(latlng, {icon: L.icon({iconUrl:'assets/icons/user.png', iconSize:[42,42]})}).addTo(map).bindPopup("<b>You are here</b>");
+            userMarker = L.marker(latlng, {icon: L.icon({iconUrl:'assets/icons/user.png', iconSize:[42,42], iconAnchor:[21,21]})}).addTo(map).bindPopup("<b>You are here</b>");
             map.setView(latlng, 18);
         } else { 
             userMarker.setLatLng(latlng); 
@@ -200,7 +221,7 @@ function clearNavigation() {
     currentRouteLine = null; 
 }
 
-// ================= TOOLS, SEARCH, & POPUP FIXES =================
+// ================= TOOLS, SEARCH, & AUTO-POPUPS =================
 function nearest(cat) {
     if (!userMarker) return alert("Locate yourself first by clicking 'Start Live Tracking'!");
     let u = userMarker.getLatLng(), min = Infinity, near = null;
@@ -213,8 +234,8 @@ function nearest(cat) {
     });
     
     if (near) { 
-        map.setView([near.data.lat, near.data.lng], 19); 
-        setTimeout(() => { near.marker.openPopup(); }, 400); // Forces auto-popup open
+        map.flyTo([near.data.lat, near.data.lng], 19, { animate: true, duration: 0.5 }); 
+        setTimeout(() => { near.marker.openPopup(); }, 600); // Guarantees popup opens after map animation
     } else {
         alert("No " + cat + " found.");
     }
@@ -292,4 +313,4 @@ function searchInBuilding() {
             if(target) { target.classList.add('highlight'); target.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'}); }
         }, 200);
     }
-                        }
+}
