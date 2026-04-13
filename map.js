@@ -130,7 +130,14 @@ function switchWing(wing) {
 
 function renderFloors() {
     let wingRooms = rooms.filter(r => r.bldg.toLowerCase() === activeBldg && r.wing === activeWing);
-    let floorSet = [...new Set(wingRooms.map(r => r.floor))].sort().reverse();
+    
+    // This custom sort treats 'G' as 0, putting it at the bottom of the stack
+    let floorSet = [...new Set(wingRooms.map(r => r.floor))].sort((a, b) => {
+        let valA = a.toUpperCase() === 'G' ? 0 : parseInt(a);
+        let valB = b.toUpperCase() === 'G' ? 0 : parseInt(b);
+        return valB - valA; // Higher numbers at the top, G at the bottom
+    });
+
     let container = document.getElementById('floor-stack');
     
     container.innerHTML = floorSet.map(f => `
