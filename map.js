@@ -1,4 +1,13 @@
-var map = L.map('map', { attributionControl: false, zoomControl: false }).setView([13.0636, 80.2336], 17);
+// Define the framing points
+var topPoint = [13.063649, 80.234012];
+var bottomPoint = [13.063007, 80.234039];
+
+// Initialize the map
+var map = L.map('map', { attributionControl: false, zoomControl: false });
+
+// Frame the map to fit exactly between those two points
+map.fitBounds([topPoint, bottomPoint]);
+
 L.control.zoom({ position: 'topleft' }).addTo(map);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 25, maxNativeZoom: 19 }).addTo(map);
 
